@@ -3,21 +3,45 @@ package pt.ulusofona.lp2.greatprogrammingjourney;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 
 public class GameManager {
+    private String [][] playerInfo;
+    private int worldSize;
+    private int [] playerPositions;
+    private int currentPlayer;
+    private boolean gameOver;
+    private Random random;
 
-    String ID;
+    public GameManager() {
+    }
+
+    public GameManager(String[][] playerInfo, int boardSize, int[] playerPositions,int currentPlayer , boolean gameOver, Random random) {
+        this.playerInfo = playerInfo;
+        this.worldSize = boardSize;
+        this.playerPositions = playerPositions;
+        this.currentPlayer = currentPlayer;
+        this.gameOver = gameOver;
+        this.random = random;
+    }
 
     public boolean createInitialBoard(String[][] playerInfo, int worldSize) {
+        this.playerInfo = playerInfo;
+        this.worldSize = worldSize;
+        this.playerPositions = new int [playerInfo.length];
+        this.currentPlayer = 0;
+        this.gameOver = false;
+        this.random = new Random();
+        return true;
 
     }
 
     public String getImagePng(int nrSquare) {
-
+        return "images/slot" + nrSquare + ".png";
     }
 
     public String[] getProgrammerInfo(int id) {
-        // Implementation goes here
+        return playerInfo[id];
     }
 
     public String getProgrammerInfoAsStr(int id) {
@@ -29,6 +53,7 @@ public class GameManager {
     }
 
     public int getCurrentPlayerID() {
+        return currentPlayer;
 
     }
 
@@ -37,6 +62,7 @@ public class GameManager {
     }
 
     public boolean gameIsOver() {
+        return gameOver;
 
     }
 
@@ -45,6 +71,7 @@ public class GameManager {
     }
 
     public JPanel getAuthorsPanel() {
+
 
     }
 
