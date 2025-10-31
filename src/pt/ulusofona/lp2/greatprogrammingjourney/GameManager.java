@@ -2,6 +2,7 @@ package pt.ulusofona.lp2.greatprogrammingjourney;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -16,9 +17,9 @@ public class GameManager {
     public GameManager() {
     }
 
-    public GameManager(String[][] playerInfo, int boardSize, int[] playerPositions,int currentPlayer , boolean gameOver, Random random) {
+    public GameManager(String[][] playerInfo, int worldSize, int[] playerPositions,int currentPlayer , boolean gameOver, Random random) {
         this.playerInfo = playerInfo;
-        this.worldSize = boardSize;
+        this.worldSize = worldSize;
         this.playerPositions = playerPositions;
         this.currentPlayer = currentPlayer;
         this.gameOver = gameOver;
@@ -45,6 +46,7 @@ public class GameManager {
     }
 
     public String getProgrammerInfoAsStr(int id) {
+        return Arrays.deepToString(playerInfo);
 
     }
 
@@ -68,6 +70,7 @@ public class GameManager {
 
     public ArrayList<String> getGameResults() {
 
+
     }
 
     public JPanel getAuthorsPanel() {
@@ -76,6 +79,7 @@ public class GameManager {
     }
 
     public HashMap<String, String> customizeBoard() {
+
 
     }
 
