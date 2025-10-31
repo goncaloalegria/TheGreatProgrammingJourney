@@ -52,6 +52,7 @@ public class GameManager {
 
     public String[] getSlotInfo(int position) {
 
+
     }
 
     public int getCurrentPlayerID() {
@@ -60,6 +61,7 @@ public class GameManager {
     }
 
     public boolean moveCurrentPlayer(int nrSpaces) {
+
 
     }
 
