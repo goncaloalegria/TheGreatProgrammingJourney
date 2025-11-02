@@ -28,17 +28,25 @@ public class GameManager {
 
     public boolean createInitialBoard(String[][] playerInfo, int boardSize) {
 
-        if (playerInfo == null) return false;
+        if (playerInfo == null) {
+            return false;
+        }
         final int n = playerInfo.length;
-        if (n < MIN_PLAYERS || n > MAX_PLAYERS) return false;
-        if (boardSize < n * 2) return false;
+        if (n < MIN_PLAYERS || n > MAX_PLAYERS) {
+            return false;
+        }
+        if (boardSize < n * 2) {
+            return false;
+        }
 
 
         HashSet<Integer> seenIds = new HashSet<>();
         HashSet<String> usedColors = new HashSet<>();
 
         for (String[] row : playerInfo) {
-            if (row == null || row.length < 4) return false;
+            if (row == null || row.length < 4) {
+                return false;
+            }
 
 
             int id;
@@ -47,21 +55,31 @@ public class GameManager {
             } catch (NumberFormatException e) {
                 return false;
             }
-            if (id < 1 || seenIds.contains(id)) return false;
+            if (id < 1 || seenIds.contains(id)) {
+                return false;
+            }
             seenIds.add(id);
 
 
             String name = row[1];
-            if (name == null || name.trim().isEmpty()) return false;
+            if (name == null || name.trim().isEmpty()) {
+                return false;
+            }
 
             //linguagens pode ser "", mas null nepia
             String langs = row[2];
-            if (langs == null) return false;
+            if (langs == null) {
+                return false;
+            }
 
 
             String color = row[3];
-            if (color == null || !VALID_COLORS.contains(color)) return false;
-            if (usedColors.contains(color)) return false;
+            if (color == null || !VALID_COLORS.contains(color)) {
+                return false;
+            }
+            if (usedColors.contains(color)) {
+                return false;
+            }
             usedColors.add(color);
         }
 
@@ -95,8 +113,12 @@ public class GameManager {
 
 
     public String getImagePng(int position) {
-        if (position < 1 || position > boardSize) return null;
-        if (position == boardSize) return "glory.png";
+        if (position < 1 || position > boardSize) {
+            return null;
+        }
+        if (position == boardSize) {
+            return "glory.png";
+        }
         return null;
     }
 
@@ -104,13 +126,19 @@ public class GameManager {
 
     public String[] getProgrammerInfo(int id) {
 
-        if (idToIndex == null) return null;
+        if (idToIndex == null) {
+            return null;
+        }
         Integer idxObj = idToIndex.get(id);
-        if (idxObj == null) return null;
+        if (idxObj == null) {
+            return null;
+        }
         int idx = idxObj;
 
         String[] row = playerInfo[idx];
-        if (row == null || row.length < 4) return null;
+        if (row == null || row.length < 4) {
+            return null;
+        }
 
         String idStr = row[0];
         String name = row[1];
@@ -163,13 +191,19 @@ public class GameManager {
     //id,nome,pos,linguagens,estado
     public String getProgrammerInfoAsStr(int id) {
 
-        if (idToIndex == null) return null;
+        if (idToIndex == null) {
+            return null;
+        }
         Integer idxObj = idToIndex.get(id);
-        if (idxObj == null) return null;
+        if (idxObj == null) {
+            return null;
+        }
         int idx = idxObj;
 
         String[] info = getProgrammerInfo(id);
-        if (info == null) return null;
+        if (info == null) {
+            return null;
+        }
 
         String idStr  = info[0];
         String name   = info[1];
@@ -182,8 +216,12 @@ public class GameManager {
 
 
     public String[] getSlotInfo(int position) {
-        if (position < 1 || position > boardSize) return null;
-        if (playerInfo == null) return new String[] { "" };
+        if (position < 1 || position > boardSize) {
+            return null;
+        }
+        if (playerInfo == null) {
+            return new String[] { "" };
+        }
 
         ArrayList<Integer> idsHere = new ArrayList<>();
         for (int i = 0; i < playerInfo.length; i++) {
@@ -191,7 +229,9 @@ public class GameManager {
                 idsHere.add(Integer.parseInt(playerInfo[i][0]));
             }
         }
-        if (idsHere.isEmpty()) return new String[] { "" };
+        if (idsHere.isEmpty()) {
+            return new String[] { "" };
+        }
 
         Collections.sort(idsHere);
         StringBuilder sb = new StringBuilder();
@@ -209,16 +249,26 @@ public class GameManager {
 
 
     public boolean moveCurrentPlayer(int nrPositions) {
-        if (gameOver) return false;
-        if (turnOrderIds == null || turnOrderIds.isEmpty()) return false;
-        if (nrPositions < 1 || nrPositions > 6) return false;
+        if (gameOver) {
+            return false;
+        }
+        if (turnOrderIds == null || turnOrderIds.isEmpty()) {
+            return false;
+        }
+        if (nrPositions < 1 || nrPositions > 6) {
+            return false;
+        }
 
         int currentId = turnOrderIds.get(turnCursor);
         Integer idxObj = idToIndex.get(currentId);
-        if (idxObj == null) return false;
+        if (idxObj == null) {
+            return false;
+        }
         int idx = idxObj;
 
-        if (!"Em Jogo".equals(states[idx])) return false;
+        if (!"Em Jogo".equals(states[idx])) {
+            return false;
+        }
 
         int from = positions[idx];
         int to = from + nrPositions;
@@ -247,8 +297,12 @@ public class GameManager {
 
     public boolean gameIsOver() {
 
-        if (gameOver) return true;
-        if (positions == null) return false;
+        if (gameOver) {
+            return true;
+        }
+        if (positions == null) {
+            return false;
+        }
         for (int i = 0; i < positions.length; i++) {
             if (positions[i] == boardSize) {
                 gameOver = true;
@@ -266,7 +320,9 @@ public class GameManager {
     public ArrayList<String> getGameResults() {
 
         ArrayList<String> out = new ArrayList<>();
-        if (!gameIsOver()) return out;
+        if (!gameIsOver()) {
+            return out;
+        }
 
         out.add("TEXT");
         out.add("THE GREAT PROGRAMMING JOURNEY");
@@ -293,7 +349,9 @@ public class GameManager {
         for (int i = 0; i < playerInfo.length; i++) {
 
             int pid = Integer.parseInt(playerInfo[i][0]);
-            if (winnerId != null && pid == winnerId) continue;
+            if (winnerId != null && pid == winnerId) {
+                continue;
+            }
             rest.add(new int[]{ i, positions[i] });
         }
 
@@ -302,7 +360,9 @@ public class GameManager {
             @Override public int compare(int[] a, int[] b) {
 
                 int byPos = Integer.compare(b[1], a[1]);
-                if (byPos != 0) return byPos;
+                if (byPos != 0) {
+                    return byPos;
+                }
                 String nameA = playerInfo[a[0]][1];
                 String nameB = playerInfo[b[0]][1];
                 return nameA.compareToIgnoreCase(nameB);
