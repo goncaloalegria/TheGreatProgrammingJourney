@@ -152,21 +152,8 @@ public class GameManager {
                 }
             }
 
-            for (int i = 0; i < langsList.size() - 1; i++) {
-                int best = i;
-                for (int j = i + 1; j < langsList.size(); j++) {
-                    String a = langsList.get(j);
-                    String b = langsList.get(best);
-                    if (a.compareToIgnoreCase(b) < 0) {
-                        best = j;
-                    }
-                }
-                if (best != i) {
-                    String tmp = langsList.get(i);
-                    langsList.set(i, langsList.get(best));
-                    langsList.set(best, tmp);
-                }
-            }
+            langsList.sort(String.CASE_INSENSITIVE_ORDER);
+
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < langsList.size(); i++) {
                 if (i > 0) {
