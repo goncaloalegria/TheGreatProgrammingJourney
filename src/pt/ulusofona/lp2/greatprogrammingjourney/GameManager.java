@@ -369,28 +369,7 @@ public class GameManager {
 
         for (int i = 0; i < k - 1; i++) {
 
-            int best = i;
-
-            for (int j = i + 1; j < k; j++) {
-
-                int aIdx = idxs[j];
-                int bIdx = idxs[best];
-                int posA = positions[aIdx];
-                int posB = positions[bIdx];
-
-                boolean better;
-                if (posA != posB) {
-                    better = (posA > posB); // desc
-                } else {
-                    String nameA = playerInfo[aIdx][1];
-                    String nameB = playerInfo[bIdx][1];
-                    better = (nameA.compareToIgnoreCase(nameB) < 0); // asc
-                }
-
-                if (better) {
-                    best = j;
-                }
-            }
+            int best = getBest(i, k, idxs);
             if (best != i) {
                 int tmp = idxs[i];
                 idxs[i] = idxs[best];
@@ -407,6 +386,32 @@ public class GameManager {
         }
 
         return out;
+    }
+
+    private int getBest(int i, int k, int[] idxs) {
+        int best = i;
+
+        for (int j = i + 1; j < k; j++) {
+
+            int aIdx = idxs[j];
+            int bIdx = idxs[best];
+            int posA = positions[aIdx];
+            int posB = positions[bIdx];
+
+            boolean better;
+            if (posA != posB) {
+                better = (posA > posB); // desc
+            } else {
+                String nameA = playerInfo[aIdx][1];
+                String nameB = playerInfo[bIdx][1];
+                better = (nameA.compareToIgnoreCase(nameB) < 0); // asc
+            }
+
+            if (better) {
+                best = j;
+            }
+        }
+        return best;
     }
 
     public JPanel getAuthorsPanel() {
