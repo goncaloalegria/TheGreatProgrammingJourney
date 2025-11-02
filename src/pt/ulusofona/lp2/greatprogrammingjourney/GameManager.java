@@ -284,12 +284,8 @@ public class GameManager {
         int to = from + nrPositions;
 
         if (to > boardSize) {
-            // ricochete
             int overshoot = to - boardSize;
-            to = boardSize - overshoot;
-            if (to < 1) {
-                to = 1;
-            }
+            to = Math.max(1, boardSize - overshoot);
         }
 
         positions[idx] = to;
