@@ -6,7 +6,7 @@ import java.util.*;
 
 public class GameManager {
 
-    private static final Set<String> VALID_COLORS = new HashSet<String>(Arrays.asList("Purple", "Green", "Brown", "Blue"));
+    private static final Set<String> VALID_COLORS = new HashSet<>(Arrays.asList("Purple", "Green", "Brown", "Blue"));
     private String[][] playerInfo;
     private int boardSize;
     private HashMap<Integer, Integer> idToIndex;
@@ -35,8 +35,8 @@ public class GameManager {
             return false;
         }
 
-        HashSet<Integer> seenIds = new HashSet<Integer>();
-        HashSet<String> usedColors = new HashSet<String>();
+        HashSet<Integer> seenIds = new HashSet<>();
+        HashSet<String> usedColors = new HashSet<>();
 
         for (String[] row : playerInfo) {
 
@@ -84,13 +84,13 @@ public class GameManager {
         this.playerInfo = playerInfo;
         this.boardSize = boardSize;
 
-        this.idToIndex = new HashMap<Integer, Integer>();
+        this.idToIndex = new HashMap<>();
         for (int i = 0; i < n; i++) {
             int id = Integer.parseInt(playerInfo[i][0]);
             idToIndex.put(id, i);
         }
 
-        this.turnOrderIds = new ArrayList<Integer>(seenIds);
+        this.turnOrderIds = new ArrayList<>(seenIds);
         Collections.sort(this.turnOrderIds);
         this.turnCursor = 0;
 
@@ -151,7 +151,7 @@ public class GameManager {
                     langsList.add(t);
                 }
             }
-            // selection sort case-insensitive (preserva texto original)
+
             for (int i = 0; i < langsList.size() - 1; i++) {
                 int best = i;
                 for (int j = i + 1; j < langsList.size(); j++) {
@@ -177,7 +177,7 @@ public class GameManager {
             langsOut = sb.toString();
         }
 
-        // Devolver cor tal como validada (CamelCase) para o viewer usar playerBlue.png, etc.
+
         String cor = row[3];
 
         String posStr = String.valueOf(positions[idx]);
@@ -225,7 +225,7 @@ public class GameManager {
             return new String[] { "" };
         }
 
-        ArrayList<Integer> idsHere = new ArrayList<Integer>();
+        ArrayList<Integer> idsHere = new ArrayList<>();
         for (int i = 0; i < playerInfo.length; i++) {
 
             if (positions[i] == position) {
@@ -344,7 +344,7 @@ public class GameManager {
 
     public ArrayList<String> getGameResults() {
 
-        ArrayList<String> out = new ArrayList<String>();
+        ArrayList<String> out = new ArrayList<>();
 
         if (!gameIsOver()) {
             return out;
@@ -436,6 +436,6 @@ public class GameManager {
 
     public HashMap<String, String> customizeBoard() {
 
-        return new HashMap<String, String>();
+        return new HashMap<>();
     }
 }
