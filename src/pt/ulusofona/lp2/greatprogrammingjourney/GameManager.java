@@ -157,7 +157,9 @@ public class GameManager {
             for (String part : parts) {
 
                 String t = part.trim();
-                if (!t.isEmpty()) langsList.add(t);
+                if (!t.isEmpty()) {
+                    langsList.add(t);
+                }
             }
 
             Collections.sort(langsList, new Comparator<>() {
@@ -171,7 +173,9 @@ public class GameManager {
 
             for (int i = 0; i < langsList.size(); i++) {
 
-                if (i > 0) sb.append(";");
+                if (i > 0) {
+                    sb.append(";");
+                }
                 sb.append(langsList.get(i));
             }
             langsOut = sb.toString();
@@ -236,7 +240,9 @@ public class GameManager {
         Collections.sort(idsHere);
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < idsHere.size(); i++) {
-            if (i > 0) sb.append(",");
+            if (i > 0) {
+                sb.append(",");
+            }
             sb.append(idsHere.get(i));
         }
 
@@ -244,7 +250,9 @@ public class GameManager {
     }
 
     public int getCurrentPlayerID() {
-        if (turnOrderIds == null || turnOrderIds.isEmpty()) return -1;
+        if (turnOrderIds == null || turnOrderIds.isEmpty()) {
+            return -1;
+        }
         return turnOrderIds.get(turnCursor);
     }
 
@@ -278,7 +286,9 @@ public class GameManager {
         if (to > boardSize) {
             int overshoot = to - boardSize;
             to = boardSize - overshoot;
-            if (to < 1) to = 1;
+            if (to < 1) {
+                to = 1;
+            }
         }
 
         positions[idx] = to;
@@ -338,7 +348,9 @@ public class GameManager {
         if (winnerId != null && idToIndex != null) {
 
             Integer wIdx = idToIndex.get(winnerId);
-            if (wIdx != null) winnerName = playerInfo[wIdx][1];
+            if (wIdx != null) {
+                winnerName = playerInfo[wIdx][1];
+            }
         }
         out.add(winnerName);
         out.add("");
