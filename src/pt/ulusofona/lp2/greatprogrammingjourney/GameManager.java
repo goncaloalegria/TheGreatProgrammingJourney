@@ -4,11 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 
-
 public class GameManager {
 
-    private static final int MIN_PLAYERS = 2;
-    private static final int MAX_PLAYERS = 4;
     private static final Set<String> VALID_COLORS = new HashSet<String>(Arrays.asList("Purple", "Green", "Brown", "Blue"));
     private String[][] playerInfo;
     private int boardSize;
@@ -22,32 +19,30 @@ public class GameManager {
     private int turnCount;
     private final Random rng = new Random();
 
-    public GameManager() {
-    }
-
+    public GameManager() { }
 
     public boolean createInitialBoard(String[][] playerInfo, int boardSize) {
 
         if (playerInfo == null) {
             return false;
         }
+
         final int n = playerInfo.length;
-        if (n < MIN_PLAYERS || n > MAX_PLAYERS) {
+        if (n < 2 || n > 4) {
             return false;
         }
         if (boardSize < n * 2) {
             return false;
         }
 
-
-        HashSet<Integer> seenIds = new HashSet<>();
-        HashSet<String> usedColors = new HashSet<>();
+        HashSet<Integer> seenIds = new HashSet<Integer>();
+        HashSet<String> usedColors = new HashSet<String>();
 
         for (String[] row : playerInfo) {
+
             if (row == null || row.length < 4) {
                 return false;
             }
-
 
             int id;
             try {
@@ -55,25 +50,28 @@ public class GameManager {
             } catch (NumberFormatException e) {
                 return false;
             }
-            if (id < 1 || seenIds.contains(id)) {
+            if (id < 1) {
+                return false;
+            }
+            if (seenIds.contains(id)) {
                 return false;
             }
             seenIds.add(id);
 
-
             String name = row[1];
+
             if (name == null || name.trim().isEmpty()) {
                 return false;
             }
 
-            //linguagens pode ser "", mas null nepia
             String langs = row[2];
+
             if (langs == null) {
                 return false;
             }
 
-
             String color = row[3];
+
             if (color == null || !VALID_COLORS.contains(color)) {
                 return false;
             }
@@ -83,18 +81,16 @@ public class GameManager {
             usedColors.add(color);
         }
 
-
         this.playerInfo = playerInfo;
         this.boardSize = boardSize;
 
-        this.idToIndex = new HashMap<>();
+        this.idToIndex = new HashMap<Integer, Integer>();
         for (int i = 0; i < n; i++) {
             int id = Integer.parseInt(playerInfo[i][0]);
             idToIndex.put(id, i);
         }
 
-
-        this.turnOrderIds = new ArrayList<>(seenIds);
+        this.turnOrderIds = new ArrayList<Integer>(seenIds);
         Collections.sort(this.turnOrderIds);
         this.turnCursor = 0;
 
@@ -111,21 +107,19 @@ public class GameManager {
         return true;
     }
 
-
     public String getImagePng(int position) {
+
         if (position < 1 || position > boardSize) {
             return null;
         }
+
         if (position == boardSize) {
             return "glory.png";
         }
         return null;
     }
 
-
-
     public String[] getProgrammerInfo(int id) {
-
         if (idToIndex == null) {
             return null;
         }
@@ -143,69 +137,71 @@ public class GameManager {
         String idStr = row[0];
         String name = row[1];
 
+
         String langsRaw = row[2];
         String langsOut;
-
         if (langsRaw.trim().isEmpty()) {
-
             langsOut = "";
         } else {
-
             ArrayList<String> langsList = new ArrayList<>();
-
             String[] parts = langsRaw.split(";");
             for (String part : parts) {
-
-                String t = part.trim();
+                String t = part == null ? "" : part.trim();
                 if (!t.isEmpty()) {
                     langsList.add(t);
                 }
             }
-
-            Collections.sort(langsList, new Comparator<>() {
-
-                @Override public int compare(String a, String b) {
-                    return a.compareToIgnoreCase(b);
+            // selection sort case-insensitive (preserva texto original)
+            for (int i = 0; i < langsList.size() - 1; i++) {
+                int best = i;
+                for (int j = i + 1; j < langsList.size(); j++) {
+                    String a = langsList.get(j);
+                    String b = langsList.get(best);
+                    if (a.compareToIgnoreCase(b) < 0) {
+                        best = j;
+                    }
                 }
-            });
-
+                if (best != i) {
+                    String tmp = langsList.get(i);
+                    langsList.set(i, langsList.get(best));
+                    langsList.set(best, tmp);
+                }
+            }
             StringBuilder sb = new StringBuilder();
-
             for (int i = 0; i < langsList.size(); i++) {
-
                 if (i > 0) {
-                    sb.append(";");
+                    sb.append("; ");
                 }
                 sb.append(langsList.get(i));
             }
             langsOut = sb.toString();
         }
 
-
+        // Devolver cor tal como validada (CamelCase) para o viewer usar playerBlue.png, etc.
         String cor = row[3];
 
         String posStr = String.valueOf(positions[idx]);
 
-        return new String[] {
-
-                idStr, name, langsOut, cor, posStr
-        };
+        return new String[] { idStr, name, langsOut, cor, posStr };
     }
 
-    //id,nome,pos,linguagens,estado
     public String getProgrammerInfoAsStr(int id) {
 
         if (idToIndex == null) {
+
             return null;
         }
         Integer idxObj = idToIndex.get(id);
         if (idxObj == null) {
+
             return null;
         }
         int idx = idxObj;
 
         String[] info = getProgrammerInfo(id);
+
         if (info == null) {
+
             return null;
         }
 
@@ -218,72 +214,90 @@ public class GameManager {
         return idStr + " | " + name + " | " + posStr + " | " + (langs == null ? "" : langs) + " | " + state;
     }
 
-
     public String[] getSlotInfo(int position) {
+
         if (position < 1 || position > boardSize) {
+
             return null;
         }
         if (playerInfo == null) {
+
             return new String[] { "" };
         }
 
-        ArrayList<Integer> idsHere = new ArrayList<>();
+        ArrayList<Integer> idsHere = new ArrayList<Integer>();
         for (int i = 0; i < playerInfo.length; i++) {
+
             if (positions[i] == position) {
+
                 idsHere.add(Integer.parseInt(playerInfo[i][0]));
             }
         }
         if (idsHere.isEmpty()) {
+
             return new String[] { "" };
         }
 
         Collections.sort(idsHere);
         StringBuilder sb = new StringBuilder();
+
         for (int i = 0; i < idsHere.size(); i++) {
+
             if (i > 0) {
+
                 sb.append(",");
             }
             sb.append(idsHere.get(i));
         }
 
-        return new String[] { sb.toString() };
+        return new String[] {
+                sb.toString()
+        };
     }
 
     public int getCurrentPlayerID() {
+
         if (turnOrderIds == null || turnOrderIds.isEmpty()) {
+
             return -1;
         }
         return turnOrderIds.get(turnCursor);
     }
 
-
     public boolean moveCurrentPlayer(int nrPositions) {
+
+
         if (gameOver) {
             return false;
         }
+
         if (turnOrderIds == null || turnOrderIds.isEmpty()) {
             return false;
         }
+
         if (nrPositions < 1 || nrPositions > 6) {
             return false;
         }
 
         int currentId = turnOrderIds.get(turnCursor);
         Integer idxObj = idToIndex.get(currentId);
+
         if (idxObj == null) {
             return false;
         }
+
         int idx = idxObj;
 
         if (!"Em Jogo".equals(states[idx])) {
+
             return false;
         }
 
         int from = positions[idx];
         int to = from + nrPositions;
 
-        // ricochete
         if (to > boardSize) {
+            // ricochete
             int overshoot = to - boardSize;
             to = boardSize - overshoot;
             if (to < 1) {
@@ -295,16 +309,15 @@ public class GameManager {
         turnCount++;
 
         if (to == boardSize) {
+
             gameOver = true;
             winnerId = currentId;
             return true;
         }
 
-        // roda turno circularmente
         turnCursor = (turnCursor + 1) % turnOrderIds.size();
         return true;
     }
-
 
     public boolean gameIsOver() {
 
@@ -314,11 +327,13 @@ public class GameManager {
         if (positions == null) {
             return false;
         }
+
         for (int i = 0; i < positions.length; i++) {
+
             if (positions[i] == boardSize) {
                 gameOver = true;
-                if (winnerId == null) {
 
+                if (winnerId == null) {
                     winnerId = Integer.parseInt(playerInfo[i][0]);
                 }
                 return true;
@@ -327,10 +342,10 @@ public class GameManager {
         return false;
     }
 
-
     public ArrayList<String> getGameResults() {
 
-        ArrayList<String> out = new ArrayList<>();
+        ArrayList<String> out = new ArrayList<String>();
+
         if (!gameIsOver()) {
             return out;
         }
@@ -344,47 +359,66 @@ public class GameManager {
         out.add("VENCEDOR");
 
         String winnerName = "";
-
         if (winnerId != null && idToIndex != null) {
-
             Integer wIdx = idToIndex.get(winnerId);
             if (wIdx != null) {
                 winnerName = playerInfo[wIdx][1];
             }
         }
+
         out.add(winnerName);
         out.add("");
         out.add("RESTANTES");
 
 
-        ArrayList<int[]> rest = new ArrayList<>();
+        int n = playerInfo.length;
+        int[] idxs = new int[Math.max(0, n - 1)];
+        int k = 0;
 
-        for (int i = 0; i < playerInfo.length; i++) {
+        for (int i = 0; i < n; i++) {
 
             int pid = Integer.parseInt(playerInfo[i][0]);
             if (winnerId != null && pid == winnerId) {
                 continue;
             }
-            rest.add(new int[]{ i, positions[i] });
+            idxs[k++] = i;
         }
 
-        Collections.sort(rest, new Comparator<>() {
 
-            @Override public int compare(int[] a, int[] b) {
+        for (int i = 0; i < k - 1; i++) {
 
-                int byPos = Integer.compare(b[1], a[1]);
-                if (byPos != 0) {
-                    return byPos;
+            int best = i;
+
+            for (int j = i + 1; j < k; j++) {
+
+                int aIdx = idxs[j];
+                int bIdx = idxs[best];
+                int posA = positions[aIdx];
+                int posB = positions[bIdx];
+
+                boolean better;
+                if (posA != posB) {
+                    better = (posA > posB); // desc
+                } else {
+                    String nameA = playerInfo[aIdx][1];
+                    String nameB = playerInfo[bIdx][1];
+                    better = (nameA.compareToIgnoreCase(nameB) < 0); // asc
                 }
-                String nameA = playerInfo[a[0]][1];
-                String nameB = playerInfo[b[0]][1];
-                return nameA.compareToIgnoreCase(nameB);
+
+                if (better) {
+                    best = j;
+                }
             }
-        });
+            if (best != i) {
+                int tmp = idxs[i];
+                idxs[i] = idxs[best];
+                idxs[best] = tmp;
+            }
+        }
 
-        for (int[] ints : rest) {
+        for (int i = 0; i < k; i++) {
 
-            int idx = ints[0];
+            int idx = idxs[i];
             String name = playerInfo[idx][1];
             int pos = positions[idx];
             out.add(name + " " + pos);
@@ -393,17 +427,15 @@ public class GameManager {
         return out;
     }
 
-
     public JPanel getAuthorsPanel() {
 
         JPanel panel = new JPanel();
-
+        panel.setPreferredSize(new Dimension(300, 300));
         return panel;
     }
 
-
     public HashMap<String, String> customizeBoard() {
 
-        return new HashMap<>();
+        return new HashMap<String, String>();
     }
 }
