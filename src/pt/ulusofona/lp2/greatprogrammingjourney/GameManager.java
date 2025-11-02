@@ -398,7 +398,15 @@ public class GameManager {
         return "";
     }
 
-        for (int j = i + 1; j < k; j++) {
+    private ArrayList<Programmer> getRemainingPlayers() {
+        ArrayList<Programmer> remaining = new ArrayList<>();
+        for (Programmer programmer : programmers) {
+            if (winnerId == null || programmer.getId() != winnerId) {
+                remaining.add(programmer);
+            }
+        }
+        return remaining;
+    }
 
             int aIdx = idxs[j];
             int bIdx = idxs[best];
