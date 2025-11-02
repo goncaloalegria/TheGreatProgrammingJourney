@@ -19,7 +19,7 @@ public class GameManager {
     private int turnCount;
     private final Random rng = new Random();
 
-    public GameManager() { }
+    public GameManager() {}
 
     public boolean createInitialBoard(String[][] playerInfo, int boardSize) {
 
