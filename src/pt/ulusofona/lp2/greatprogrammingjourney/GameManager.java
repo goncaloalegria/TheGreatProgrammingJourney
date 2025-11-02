@@ -279,13 +279,6 @@ public class GameManager {
             return false;
         }
 
-        int steps;
-        if (nrPositions == 0) {
-            steps = rng.nextInt(6) + 1; // 1..6
-        } else {
-            steps = nrPositions;        // 1..6
-        }
-
         int currentId = turnOrderIds.get(turnCursor);
         Integer idxObj = idToIndex.get(currentId);
 
@@ -360,7 +353,7 @@ public class GameManager {
         out.add("THE GREAT PROGRAMMING JOURNEY");
         out.add("");
         out.add("NR. DE TURNOS");
-        out.add(String.valueOf(turnCount));
+        out.add(String.valueOf(turnCount+1));
         out.add("");
         out.add("VENCEDOR");
 
