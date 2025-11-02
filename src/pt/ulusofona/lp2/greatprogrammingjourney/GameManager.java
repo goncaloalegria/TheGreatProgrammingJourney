@@ -239,6 +239,7 @@ public class GameManager {
             if (i > 0) sb.append(",");
             sb.append(idsHere.get(i));
         }
+
         return new String[] { sb.toString() };
     }
 
