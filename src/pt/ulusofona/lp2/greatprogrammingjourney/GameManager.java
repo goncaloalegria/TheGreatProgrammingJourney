@@ -350,7 +350,6 @@ public class GameManager {
             return out;
         }
 
-        out.add("TEXT");
         out.add("THE GREAT PROGRAMMING JOURNEY");
         out.add("");
         out.add("NR. DE TURNOS");
