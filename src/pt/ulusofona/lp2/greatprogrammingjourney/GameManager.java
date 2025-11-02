@@ -275,8 +275,15 @@ public class GameManager {
             return false;
         }
 
-        if (nrPositions < 1 || nrPositions > 6) {
+        if (nrPositions < 0 || nrPositions > 6) {
             return false;
+        }
+
+        int steps;
+        if (nrPositions == 0) {
+            steps = rng.nextInt(6) + 1; // 1..6
+        } else {
+            steps = nrPositions;        // 1..6
         }
 
         int currentId = turnOrderIds.get(turnCursor);
