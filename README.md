@@ -1,0 +1,1 @@
+![](DiagramaUML.png?raw=true "Diagrama UML")
