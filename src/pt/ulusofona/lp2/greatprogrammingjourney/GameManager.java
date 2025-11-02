@@ -388,8 +388,15 @@ public class GameManager {
         return out;
     }
 
-    private int getBest(int i, int k, int[] idxs) {
-        int best = i;
+    private String getWinnerName() {
+        if (winnerId != null) {
+            Programmer winner = idToProgrammer.get(winnerId);
+            if (winner != null) {
+                return winner.getName();
+            }
+        }
+        return "";
+    }
 
         for (int j = i + 1; j < k; j++) {
 
