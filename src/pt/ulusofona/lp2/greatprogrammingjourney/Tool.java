@@ -1,12 +1,12 @@
 package pt.ulusofona.lp2.greatprogrammingjourney;
 
-public abstract class Abyss {
+public abstract class Tool {
 
-    protected int id;        // ID do tipo de abismo
-    protected String name;   // Nome do abismo
+    protected int id;        // ID do tipo de ferramenta
+    protected String name;   // Nome da ferramenta
     protected int position;  // Posição no tabuleiro
 
-    public Abyss(int id, String name, int position) {
+    public Tool(int id, String name, int position) {
         this.id = id;
         this.name = name;
         this.position = position;
@@ -37,15 +37,6 @@ public abstract class Abyss {
         return name + " (ID: " + id + ", posição: " + position + ")";
     }
 
-    // programmer: jogador que caiu no abismo
-    // diceValue: valor do dado que o levou até aqui
-    public abstract void applyEffect(Programmer programmer, int diceValue, int previousPosition);
-
-    // por omissão não repete turno
-    public boolean forcesRepeatTurn() {
-        return false;
-    }
-
-    // Cada subclasse indica o nome do ficheiro de imagem
+    // Nome do ficheiro de imagem (ex: "tool-laptop.png")
     public abstract String getImageName();
 }

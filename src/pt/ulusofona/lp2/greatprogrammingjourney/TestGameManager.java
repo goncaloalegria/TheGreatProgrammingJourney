@@ -1,4 +1,5 @@
 package pt.ulusofona.lp2.greatprogrammingjourney;
+
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -13,7 +14,8 @@ public class TestGameManager {
         };
 
         int boardSize = 10;
-        boolean resultado = gameManager.createInitialBoard(playerInfo,boardSize);
+        // terceiro parâmetro: AbyssesAndTools -> null porque não estamos a testar abismos
+        boolean resultado = gameManager.createInitialBoard(playerInfo, boardSize, null);
 
         assertTrue(resultado,"createInitialBoardValid deve retornar true");
 
@@ -27,7 +29,7 @@ public class TestGameManager {
         };
         int boardSize = 10;
 
-        boolean resultado = gameManager.createInitialBoard(playerInfo, boardSize);
+        boolean resultado = gameManager.createInitialBoard(playerInfo, boardSize, null);
 
         assertFalse(resultado, "createInitialBoard deve retornar false com apenas 1 jogador");
     }
@@ -36,13 +38,13 @@ public class TestGameManager {
     public void testCreateInitialBoardInvalidColor(){
         GameManager gameManager = new GameManager();
         String [][] playerInfo = {
-            {"1","Ana","Java","Red"}
+                {"1","Ana","Java","Red"}
         };
         int boardSize = 10;
 
-        boolean resultado = gameManager.createInitialBoard(playerInfo,boardSize);
+        boolean resultado = gameManager.createInitialBoard(playerInfo, boardSize, null);
 
-        assertFalse(resultado,"testCreateInitialBoardInvalidColor, deve retornar false pois cor esta indesponivel");
+        assertFalse(resultado,"testCreateInitialBoardInvalidColor, deve retornar false pois cor esta indisponivel");
     }
 
     @Test
@@ -52,13 +54,14 @@ public class TestGameManager {
                 {"1", "Hugo", "Haskell", "Purple"},
                 {"2", "Iris", "Kotlin", "Green"}
         };
-        gameManager.createInitialBoard(playerInfo, 10);
+        gameManager.createInitialBoard(playerInfo, 10, null);
 
         boolean resultado = gameManager.moveCurrentPlayer(3);
 
         assertTrue(resultado, "moveCurrentPlayer deve retornar true para movimento válido");
 
         String[] info = gameManager.getProgrammerInfo(1);
+        // assumindo que getInfoAsArray() devolve a posição no índice 4
         assertEquals("4", info[4], "Jogador 1 deve estar na posição 4 após mover 3 casas");
     }
 
@@ -69,7 +72,7 @@ public class TestGameManager {
                 {"10", "Jack", "Perl", "Blue"},
                 {"20", "Kate", "Swift", "Brown"}
         };
-        gameManager.createInitialBoard(playerInfo, 15);
+        gameManager.createInitialBoard(playerInfo, 15, null);
 
         String[] slotInfo = gameManager.getSlotInfo(1);
 
@@ -85,12 +88,11 @@ public class TestGameManager {
                 {"3", "Frank", "Go", "Purple"},
                 {"7", "Grace", "Rust", "Brown"}
         };
-        gameManager.createInitialBoard(playerInfo, 12);
+        gameManager.createInitialBoard(playerInfo, 12, null);
 
         int currentPlayerId = gameManager.getCurrentPlayerID();
 
         assertEquals(3, currentPlayerId, "getCurrentPlayerID deve retornar 3 (menor ID)");
     }
-
 
 }

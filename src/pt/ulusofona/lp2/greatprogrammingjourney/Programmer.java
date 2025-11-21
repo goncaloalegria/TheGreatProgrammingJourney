@@ -2,7 +2,6 @@ package pt.ulusofona.lp2.greatprogrammingjourney;
 
 import java.util.ArrayList;
 
-
 public class Programmer {
 
     private int id;
@@ -17,8 +16,8 @@ public class Programmer {
         this.name = name;
         this.languages = languages;
         this.color = color;
-        this.position = 1; // Posição inicial
-        this.state = "Em Jogo"; // Estado inicial
+        this.position = 1;           // Posição inicial
+        this.state = "Em Jogo";      // Estado inicial
     }
 
     // Getters
@@ -55,7 +54,6 @@ public class Programmer {
         this.state = state;
     }
 
-
     public String getOrderedLanguages() {
         if (languages == null || languages.trim().isEmpty()) {
             return "";
@@ -84,9 +82,8 @@ public class Programmer {
         return sb.toString();
     }
 
-
     public String[] getInfoAsArray() {
-        return new String[] {
+        return new String[]{
                 String.valueOf(id),
                 name,
                 getOrderedLanguages(),
@@ -95,17 +92,14 @@ public class Programmer {
         };
     }
 
-
     public String getInfoAsString() {
         return id + " | " + name + " | " + position + " | " +
                 getOrderedLanguages() + " | " + state;
     }
 
-
     public void moveTo(int newPosition) {
         this.position = newPosition;
     }
-
 
     public boolean isPlaying() {
         return "Em Jogo".equals(state);

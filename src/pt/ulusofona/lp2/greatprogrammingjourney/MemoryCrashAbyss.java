@@ -4,6 +4,7 @@ public class MemoryCrashAbyss extends Abyss {
 
     public static final int ID = 0;
     private static final String NAME = "Crash de Memória";
+    private static final String IMAGE_NAME = "crash.png"; // tem de existir em /images do jar
 
     public MemoryCrashAbyss(int position) {
         super(ID, NAME, position);
@@ -15,14 +16,18 @@ public class MemoryCrashAbyss extends Abyss {
             return;
         }
 
-        // O programa "crasha" e o jogador tem de recomeçar a vez:
-        // volta para a posição onde estava no início da jogada.
+        // O programa "crasha": volta para a posição anterior ao lançamento
         programmer.setPosition(previousPosition);
     }
 
     @Override
     public boolean forcesRepeatTurn() {
-        // Este abismo obriga o jogador a repetir a vez.
+        // Este abismo obriga o jogador a repetir a vez
         return true;
+    }
+
+    @Override
+    public String getImageName() {
+        return IMAGE_NAME;
     }
 }
