@@ -49,16 +49,7 @@ public class GameManager {
         this.random = new Random();
     }
 
-    // --------------------------------------------------
-    // createInitialBoard (versão parte 1)
-    // --------------------------------------------------
-    public boolean createInitialBoard(String[][] playerInfo, int worldSize) {
-        return createInitialBoard(playerInfo, worldSize, null);
-    }
 
-    // --------------------------------------------------
-    // createInitialBoard COM AbyssesAndTools (parte 2)
-    // --------------------------------------------------
     public boolean createInitialBoard(String[][] playerInfo, int boardSize, String[][] AbyssesAndTools) {
         if (playerInfo == null) {
             return false;
@@ -109,9 +100,8 @@ public class GameManager {
         this.lastAbyss = null;
         this.lastTool = null;
 
-        // -------------------------------
+
         // Processar AbyssesAndTools
-        // -------------------------------
         abyssesByPosition.clear();
         toolsByPosition.clear();
 
@@ -229,9 +219,7 @@ public class GameManager {
         return true;
     }
 
-    // -------------------------------
-    // Posições aleatórias livres
-    // -------------------------------
+    //posições para colocar os abismos e tools
     private int getRandomFreeSlot(Set<Integer> usedSlots) {
         // Vamos tentar algumas vezes até encontrar uma casa livre
         for (int tries = 0; tries < boardSize * 5; tries++) {
@@ -368,7 +356,7 @@ public class GameManager {
         return turnOrderIds.get(turnCursor);
     }
 
-    // Métodos extra (não obrigatórios na API, mas úteis)
+    // TODO: metodos extra, podem ser necessários
     public String getCurrentPlayerName() {
         int id = getCurrentPlayerID();
         Programmer p = idToProgrammer.get(id);
@@ -584,10 +572,8 @@ public class GameManager {
         return abyss.forcesRepeatTurn();
     }
 
-    // --------------------------------------------------
-    // MÉTODO EXIGIDO PELA API / GUI
+
     // Só deve devolver mensagem quando tiver havido abismo/tool
-    // --------------------------------------------------
     public String reactToAbyssOrTool() {
         // Se não houve abismo nem ferramenta na última jogada,
         // devolvemos null para a GUI NÃO mostrar aviso.
@@ -625,9 +611,6 @@ public class GameManager {
         return sb.toString();
     }
 
-    // --------------------------------------------------
-    // Fábrica de Abyss com base no ID (0..9)
-    // --------------------------------------------------
     private Abyss createAbyss(int abyssId, int position) {
         switch (abyssId) {
             case 0:
@@ -659,10 +642,6 @@ public class GameManager {
                 return null;
         }
     }
-
-    // --------------------------------------------------
-    // MÉTODOS EXIGIDOS PELA API: saveGame / loadGame
-    // --------------------------------------------------
 
     public boolean saveGame(File file) {
         if (file == null) {
@@ -735,172 +714,216 @@ public class GameManager {
         }
     }
 
-    // Assinatura conforme enunciado:
-    // public void loadGame(File file) throws InvalidFileException, FileNotFoundException
     public void loadGame(File file) throws InvalidFileException, FileNotFoundException {
-        if (file == null || !file.exists() || !file.isFile()) {
-            throw new FileNotFoundException("Ficheiro não encontrado");
-        }
+        validateLoadFile(file);
 
         try (Scanner scanner = new Scanner(file)) {
-            if (!scanner.hasNextLine()) {
-                throw new InvalidFileException("Ficheiro vazio");
-            }
-
-            // 1) Tamanho do tabuleiro
-            boardSize = Integer.parseInt(scanner.nextLine().trim());
-
-            // 2) Programadores
-            int numProgrammers = Integer.parseInt(scanner.nextLine().trim());
-            programmers = new ArrayList<>();
-            idToProgrammer = new HashMap<>();
-
-            for (int i = 0; i < numProgrammers; i++) {
-                if (!scanner.hasNextLine()) {
-                    throw new InvalidFileException("Dados de programadores incompletos");
-                }
-                String line = scanner.nextLine();
-                String[] parts = line.split("\\|", -1);
-                if (parts.length < 6) {
-                    throw new InvalidFileException("Linha de programador inválida: " + line);
-                }
-
-                int id = Integer.parseInt(parts[0]);
-                String name = parts[1];
-                String languages = parts[2];
-                String color = parts[3];
-                int position = Integer.parseInt(parts[4]);
-                String state = parts[5];
-
-                Programmer p = new Programmer(id, name, languages, color);
-                p.setPosition(position);
-                p.setState(state);
-
-                programmers.add(p);
-                idToProgrammer.put(id, p);
-            }
-
-            // 3) Abysses
-            if (!scanner.hasNextLine()) {
-                throw new InvalidFileException("Faltam dados de abismos");
-            }
-            int numAbysses = Integer.parseInt(scanner.nextLine().trim());
-            abyssesByPosition = new HashMap<>();
-            for (int i = 0; i < numAbysses; i++) {
-                if (!scanner.hasNextLine()) {
-                    throw new InvalidFileException("Dados de abismos incompletos");
-                }
-                String line = scanner.nextLine();
-                String[] parts = line.split("\\|", -1);
-                if (parts.length < 2) {
-                    throw new InvalidFileException("Linha de abismo inválida: " + line);
-                }
-                int abyssId = Integer.parseInt(parts[0]);
-                int pos = Integer.parseInt(parts[1]);
-
-                Abyss a = createAbyss(abyssId, pos);
-                if (a != null) {
-                    abyssesByPosition.put(pos, a);
-                }
-            }
-
-            // 4) Tools
-            if (!scanner.hasNextLine()) {
-                throw new InvalidFileException("Faltam dados de ferramentas");
-            }
-            int numTools = Integer.parseInt(scanner.nextLine().trim());
-            toolsByPosition = new HashMap<>();
-            for (int i = 0; i < numTools; i++) {
-                if (!scanner.hasNextLine()) {
-                    throw new InvalidFileException("Dados de ferramentas incompletos");
-                }
-                String line = scanner.nextLine();
-                String[] parts = line.split("\\|", -1);
-                if (parts.length < 2) {
-                    throw new InvalidFileException("Linha de ferramenta inválida: " + line);
-                }
-                int toolId = Integer.parseInt(parts[0]);
-                int pos = Integer.parseInt(parts[1]);
-
-                Tool t = createTool(toolId, pos);
-                if (t != null) {
-                    toolsByPosition.put(pos, t);
-                }
-            }
-
-            // 5) Ordem de jogada
-            if (!scanner.hasNextLine()) {
-                throw new InvalidFileException("Faltam dados da ordem de jogo");
-            }
-            int orderSize = Integer.parseInt(scanner.nextLine().trim());
-            turnOrderIds = new ArrayList<>();
-            for (int i = 0; i < orderSize; i++) {
-                if (!scanner.hasNextLine()) {
-                    throw new InvalidFileException("Dados da ordem de jogo incompletos");
-                }
-                int id = Integer.parseInt(scanner.nextLine().trim());
-                turnOrderIds.add(id);
-            }
-
-            // 6) Estado do jogo
-            if (!scanner.hasNextLine()) {
-                throw new InvalidFileException("Faltam dados do estado do jogo");
-            }
-            turnCursor = Integer.parseInt(scanner.nextLine().trim());
-
-            if (!scanner.hasNextLine()) {
-                throw new InvalidFileException("Faltam dados do estado do jogo");
-            }
-            gameOver = Boolean.parseBoolean(scanner.nextLine().trim());
-
-            if (!scanner.hasNextLine()) {
-                throw new InvalidFileException("Faltam dados do estado do jogo");
-            }
-            int winId = Integer.parseInt(scanner.nextLine().trim());
-            winnerId = (winId < 0 ? null : winId);
-
-            if (!scanner.hasNextLine()) {
-                throw new InvalidFileException("Faltam dados do estado do jogo");
-            }
-            turnCount = Integer.parseInt(scanner.nextLine().trim());
-
-            // 7) Info da última jogada (opcional, mas tentamos ler)
-            if (scanner.hasNextLine()) {
-                lastDiceValue = Integer.parseInt(scanner.nextLine().trim());
-            } else {
-                lastDiceValue = 0;
-            }
-
-            if (scanner.hasNextLine()) {
-                int lastPlayer = Integer.parseInt(scanner.nextLine().trim());
-                lastPlayerId = (lastPlayer < 0 ? null : lastPlayer);
-            } else {
-                lastPlayerId = null;
-            }
-
-            if (scanner.hasNextLine()) {
-                lastFromPosition = Integer.parseInt(scanner.nextLine().trim());
-            } else {
-                lastFromPosition = 0;
-            }
-
-            if (scanner.hasNextLine()) {
-                lastToPosition = Integer.parseInt(scanner.nextLine().trim());
-            } else {
-                lastToPosition = 0;
-            }
-
-            // Estes são reconstruídos depois de uma nova jogada
-            lastAbyss = null;
-            lastTool = null;
-
-            // Garantir que o Random existe
-            if (random == null) {
-                random = new Random();
-            }
-
-        } catch (NumberFormatException | IllegalStateException | NoSuchElementException e) {
+            loadBoardSize(scanner);
+            loadProgrammers(scanner);
+            loadAbysses(scanner);
+            loadTools(scanner);
+            loadTurnOrder(scanner);
+            loadGameState(scanner);
+            loadLastMoveInfo(scanner);
+            ensureRandom();
+        } catch (InvalidFileException e) {
+            // Reencaminhamos a exceção específica
+            throw e;
+        } catch (Exception e) {
+            // Qualquer outra coisa é formato inválido
             throw new InvalidFileException("Formato de ficheiro inválido");
         }
     }
+
+    // ----------------- MÉTODOS AUXILIARES DO loadGame -----------------
+
+    private void validateLoadFile(File file) throws FileNotFoundException {
+        if (file == null || !file.exists() || !file.isFile()) {
+            throw new FileNotFoundException("Ficheiro não encontrado");
+        }
+    }
+
+    private void loadBoardSize(Scanner scanner) throws InvalidFileException {
+        if (!scanner.hasNextLine()) {
+            throw new InvalidFileException("Ficheiro vazio");
+        }
+        boardSize = Integer.parseInt(scanner.nextLine().trim());
+    }
+
+    private void loadProgrammers(Scanner scanner) throws InvalidFileException {
+        if (!scanner.hasNextLine()) {
+            throw new InvalidFileException("Faltam dados de programadores");
+        }
+
+        int numProgrammers = Integer.parseInt(scanner.nextLine().trim());
+        programmers = new ArrayList<>();
+        idToProgrammer = new HashMap<>();
+
+        for (int i = 0; i < numProgrammers; i++) {
+            if (!scanner.hasNextLine()) {
+                throw new InvalidFileException("Dados de programadores incompletos");
+            }
+            String line = scanner.nextLine();
+            String[] parts = line.split("\\|", -1);
+            if (parts.length < 6) {
+                throw new InvalidFileException("Linha de programador inválida: " + line);
+            }
+
+            int id = Integer.parseInt(parts[0]);
+            String name = parts[1];
+            String languages = parts[2];
+            String color = parts[3];
+            int position = Integer.parseInt(parts[4]);
+            String state = parts[5];
+
+            Programmer p = new Programmer(id, name, languages, color);
+            p.setPosition(position);
+            p.setState(state);
+
+            programmers.add(p);
+            idToProgrammer.put(id, p);
+        }
+    }
+
+    private void loadAbysses(Scanner scanner) throws InvalidFileException {
+        if (!scanner.hasNextLine()) {
+            throw new InvalidFileException("Faltam dados de abismos");
+        }
+
+        int numAbysses = Integer.parseInt(scanner.nextLine().trim());
+        abyssesByPosition = new HashMap<>();
+
+        for (int i = 0; i < numAbysses; i++) {
+            if (!scanner.hasNextLine()) {
+                throw new InvalidFileException("Dados de abismos incompletos");
+            }
+            String line = scanner.nextLine();
+            String[] parts = line.split("\\|", -1);
+            if (parts.length < 2) {
+                throw new InvalidFileException("Linha de abismo inválida: " + line);
+            }
+
+            int abyssId = Integer.parseInt(parts[0]);
+            int pos = Integer.parseInt(parts[1]);
+
+            Abyss a = createAbyss(abyssId, pos);
+            if (a != null) {
+                abyssesByPosition.put(pos, a);
+            }
+        }
+    }
+
+    private void loadTools(Scanner scanner) throws InvalidFileException {
+        if (!scanner.hasNextLine()) {
+            throw new InvalidFileException("Faltam dados de ferramentas");
+        }
+
+        int numTools = Integer.parseInt(scanner.nextLine().trim());
+        toolsByPosition = new HashMap<>();
+
+        for (int i = 0; i < numTools; i++) {
+            if (!scanner.hasNextLine()) {
+                throw new InvalidFileException("Dados de ferramentas incompletos");
+            }
+            String line = scanner.nextLine();
+            String[] parts = line.split("\\|", -1);
+            if (parts.length < 2) {
+                throw new InvalidFileException("Linha de ferramenta inválida: " + line);
+            }
+
+            int toolId = Integer.parseInt(parts[0]);
+            int pos = Integer.parseInt(parts[1]);
+
+            Tool t = createTool(toolId, pos);
+            if (t != null) {
+                toolsByPosition.put(pos, t);
+            }
+        }
+    }
+
+    private void loadTurnOrder(Scanner scanner) throws InvalidFileException {
+        if (!scanner.hasNextLine()) {
+            throw new InvalidFileException("Faltam dados da ordem de jogo");
+        }
+
+        int orderSize = Integer.parseInt(scanner.nextLine().trim());
+        turnOrderIds = new ArrayList<>();
+
+        for (int i = 0; i < orderSize; i++) {
+            if (!scanner.hasNextLine()) {
+                throw new InvalidFileException("Dados da ordem de jogo incompletos");
+            }
+            int id = Integer.parseInt(scanner.nextLine().trim());
+            turnOrderIds.add(id);
+        }
+    }
+
+    private void loadGameState(Scanner scanner) throws InvalidFileException {
+        // turnCursor
+        if (!scanner.hasNextLine()) {
+            throw new InvalidFileException("Faltam dados do estado do jogo");
+        }
+        turnCursor = Integer.parseInt(scanner.nextLine().trim());
+
+        // gameOver
+        if (!scanner.hasNextLine()) {
+            throw new InvalidFileException("Faltam dados do estado do jogo");
+        }
+        gameOver = Boolean.parseBoolean(scanner.nextLine().trim());
+
+        // winnerId
+        if (!scanner.hasNextLine()) {
+            throw new InvalidFileException("Faltam dados do estado do jogo");
+        }
+        int winId = Integer.parseInt(scanner.nextLine().trim());
+        winnerId = (winId < 0 ? null : winId);
+
+        // turnCount
+        if (!scanner.hasNextLine()) {
+            throw new InvalidFileException("Faltam dados do estado do jogo");
+        }
+        turnCount = Integer.parseInt(scanner.nextLine().trim());
+    }
+
+    private void loadLastMoveInfo(Scanner scanner) {
+        // Estes campos são opcionais no ficheiro. Se não existirem, usamos defaults.
+        if (scanner.hasNextLine()) {
+            lastDiceValue = Integer.parseInt(scanner.nextLine().trim());
+        } else {
+            lastDiceValue = 0;
+            lastPlayerId = null;
+            lastFromPosition = 0;
+            lastToPosition = 0;
+            return;
+        }
+
+        if (scanner.hasNextLine()) {
+            int lastPlayer = Integer.parseInt(scanner.nextLine().trim());
+            lastPlayerId = (lastPlayer < 0 ? null : lastPlayer);
+        } else {
+            lastPlayerId = null;
+        }
+
+        if (scanner.hasNextLine()) {
+            lastFromPosition = Integer.parseInt(scanner.nextLine().trim());
+        } else {
+            lastFromPosition = 0;
+        }
+
+        if (scanner.hasNextLine()) {
+            lastToPosition = Integer.parseInt(scanner.nextLine().trim());
+        } else {
+            lastToPosition = 0;
+        }
+
+        lastAbyss = null;
+        lastTool = null;
+    }
+
+    private void ensureRandom() {
+        if (random == null) {
+            random = new Random();
+        }
+    }
 }
+
