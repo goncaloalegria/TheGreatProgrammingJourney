@@ -18,13 +18,16 @@ public class GameManager {
     private boolean gameOver;
     private Integer winnerId;
     private int turnCount;
+    private HashMap<Integer, Abyss> abyssesByPosition;
+
 
     public GameManager() {
         this.programmers = new ArrayList<>();
         this.idToProgrammer = new HashMap<>();
+        this.abyssesByPosition = new HashMap<>();
     }
 
-    public boolean createInitialBoard(String[][] playerInfo, int boardSize) {
+    public boolean createInitialBoard(String[][] playerInfo, int boardSize, String[][] AbyssesAndTools) {
         if (playerInfo == null) {
             return false;
         }
@@ -69,6 +72,62 @@ public class GameManager {
         this.gameOver = false;
         this.winnerId = null;
         this.turnCount = 0;
+
+        // -------------------------------
+        // NOVO: processar AbyssesAndTools
+        // -------------------------------
+        abyssesByPosition.clear();
+
+        if (AbyssesAndTools != null) {
+            for (String[] row : AbyssesAndTools) {
+                if (row == null) {
+                    continue;
+                }
+
+                // Esperamos pelo menos: tipo, id, posição
+                if (row.length < 3) {
+                    return false;
+                }
+
+                int tipo;
+                int abyssOrToolId;
+                int pos;
+
+                try {
+                    tipo = Integer.parseInt(row[0]);
+                    abyssOrToolId = Integer.parseInt(row[1]);
+                    pos = Integer.parseInt(row[2]);
+                } catch (NumberFormatException e) {
+                    return false;
+                }
+
+                // Validar posição dentro do tabuleiro
+                // (tipicamente não se colocam coisas na casa 1 nem na última)
+                if (pos <= 1 || pos >= boardSize) {
+                    return false;
+                }
+
+                if (tipo == 0) { // 0 = Abyss
+                    Abyss abyss = createAbyss(abyssOrToolId, pos);
+                    if (abyss == null) {
+                        // ID de abismo desconhecido
+                        return false;
+                    }
+
+                    // Se já existir um abyss nesta posição, podes:
+                    // - retornar false (configuração inválida)
+                    // - ou substituir (eu vou retornar false para ser mais seguro)
+                    if (abyssesByPosition.containsKey(pos)) {
+                        return false;
+                    }
+
+                    addAbyss(abyss);
+                } else {
+                    // 1 = Tool (por exemplo) -> ainda não tratamos,
+                    // por isso ignoramos por agora.
+                }
+            }
+        }
 
         return true;
     }
@@ -202,13 +261,17 @@ public class GameManager {
         currentProgrammer.setPosition(to);
         turnCount++;
 
+        boolean repeatTurn = applyAbyssIfAny(currentProgrammer, from, nrPositions);
+
         if (to == boardSize) {
             gameOver = true;
             winnerId = currentId;
             return true;
         }
 
-        turnCursor = (turnCursor + 1) % turnOrderIds.size();
+        if (!repeatTurn) {
+            turnCursor = (turnCursor + 1) % turnOrderIds.size();
+        }
         return true;
     }
 
@@ -309,4 +372,56 @@ public class GameManager {
     public HashMap<String, String> customizeBoard() {
         return new HashMap<>();
     }
+
+    public void addAbyss(Abyss abyss){
+        if(abyss == null){
+            return;
+        }
+        abyssesByPosition.put(abyss.getPosition(),abyss);
+        // isto faz com que possa adicionar os abyss ao gameManager
+        // Ex: gameManager.addAbyss(new MemoryCrashAbyss(5));   // posição 5 → ID 0
+    }
+
+    private boolean applyAbyssIfAny(Programmer programmer, int fromPosition, int diceValue) {
+        if (programmer == null) {
+            return false;
+        }
+
+        int currentPos = programmer.getPosition();
+        Abyss abyss = abyssesByPosition.get(currentPos);
+
+        if (abyss == null) {
+            return false;
+        }
+
+        abyss.applyEffect(programmer, diceValue, fromPosition);
+
+        // true se o jogador tem de repetir a vez (ex: Crash de Memória)
+        return abyss.forcesRepeatTurn();
+    }
+
+    // --------------------------------------------------
+    // NOVO: fábrica de Abyss com base no ID
+    // --------------------------------------------------
+    private Abyss createAbyss(int abyssId, int position) {
+        // Aqui fazes o mapeamento ID -> tipo de Abyss.
+        // Exemplo baseado no teu comentário:
+        // "gameManager.addAbyss(new MemoryCrashAbyss(5));   // posição 5 → ID 0"
+        switch (abyssId) {
+            case 0:
+                // Crash de Memória
+                return new MemoryCrashAbyss(position);
+
+            // Quando criares mais abismos, vais adicionando aqui:
+             case 1:
+                 return new LogicErrorAbyss(position);
+            // case 2: return new LogicErrorAbyss(position);
+            // ...
+
+            default:
+                // ID desconhecido → configuração inválida
+                return null;
+        }
+    }
+
 }
