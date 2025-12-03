@@ -623,15 +623,22 @@ public class GameManager {
     }
 
     // Fábrica de Abyss com base no ID
+    // TODO: colocar os abusmos no case
     private Abyss createAbyss(int abyssId, int position) {
         switch (abyssId) {
             case 0:
-                // Crash de Memória
-                return new MemoryCrashAbyss(position);
+                // Erro de Sintaxe
+                return new SyntaxErrorAbyss(position);
             case 1:
                 // Erro de Lógica
                 return new LogicErrorAbyss(position);
-            // TODO: implementar os restantes IDs 2..9
+            case 2:
+                return new ExceptionAbyss(position);
+
+
+            case 4:
+                // Crash de Memória
+                return new MemoryCrashAbyss(position);
             default:
                 // ID que ainda não está implementado → devolve null
                 return null;
