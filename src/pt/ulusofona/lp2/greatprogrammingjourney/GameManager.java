@@ -314,7 +314,6 @@ public class GameManager {
         return sb.toString();
     }
 
-    // getSlotInfo: [0]=jogadores, [1]=idAbyss, [2]=idTool
     public String[] getSlotInfo(int position) {
         if (position < 1 || position > boardSize) {
             return null;
@@ -343,26 +342,27 @@ public class GameManager {
             }
         }
 
-        // 1) id do abismo (numérico, -1 se não houver)
-        int abyssId = -1;
+        // 1) id do abismo (string vazia se não houver)
+        String abyssIdStr = "";
         Abyss abyss = abyssesByPosition.get(position);
         if (abyss != null) {
-            abyssId = abyss.getId();
+            abyssIdStr = String.valueOf(abyss.getId());
         }
 
-        // 2) id da ferramenta (-1 se não houver)
-        int toolId = -1;
+        // 2) id da ferramenta (string vazia se não houver)
+        String toolIdStr = "";
         Tool tool = toolsByPosition.get(position);
         if (tool != null) {
-            toolId = tool.getId();
+            toolIdStr = String.valueOf(tool.getId());
         }
 
         return new String[]{
                 programmersStr,
-                String.valueOf(abyssId),
-                String.valueOf(toolId)
+                abyssIdStr,
+                toolIdStr
         };
     }
+
 
     // --------- Jogador atual / dado ---------
 
