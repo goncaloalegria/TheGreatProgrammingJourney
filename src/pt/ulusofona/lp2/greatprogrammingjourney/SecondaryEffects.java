@@ -27,8 +27,6 @@ public class SecondaryEffects extends Abyss{
         // porque isto é um efeito de abismo, não um movimento normal.
         programmer.setPosition(targetPos);
 
-
-
     }
 
     @Override
