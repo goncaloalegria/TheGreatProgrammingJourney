@@ -2,7 +2,7 @@ package pt.ulusofona.lp2.greatprogrammingjourney;
 
 public class SyntaxErrorAbyss extends Abyss {
 
-    public static final int ID = 1;       // CORRIGIDO: era 0
+    public static final int ID = 0;       // CORRIGIDO: era 0
     private static final String NAME = "Erro de Lógica";
     private static final String IMAGE_NAME = "syntax.png";
 

@@ -2,12 +2,13 @@ package pt.ulusofona.lp2.greatprogrammingjourney;
 
 public class ExceptionAbyss extends Abyss {
 
-    private static final int ABYSS_ID = 2;
-    private static final String ABYSS_NAME = "Exception";
+    private static final int ID = 2;
+    private static final String NAME = "Exception";
     private static final int RETREAT_POSITIONS = 2;
+    private static final String IMAGE_NAME = "exception.png";
 
     public ExceptionAbyss(int position) {
-        super(ABYSS_ID, ABYSS_NAME, position);
+        super(ID, NAME, position);
     }
 
     @Override
@@ -24,6 +25,6 @@ public class ExceptionAbyss extends Abyss {
 
     @Override
     public String getImageName() {
-        return "exception.png";
+        return IMAGE_NAME;
     }
 }
