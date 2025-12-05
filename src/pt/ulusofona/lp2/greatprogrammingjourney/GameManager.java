@@ -428,7 +428,7 @@ public class GameManager {
         this.lastFromPosition = from;
         this.lastToPosition = to;
 
-        currentProgrammer.setPosition(to);
+        currentProgrammer.recordMove(to);
         turnCount++;
 
         boolean repeatTurn = applyAbyssIfAny(currentProgrammer, from, nrPositions);
@@ -632,13 +632,27 @@ public class GameManager {
             case 1:
                 // Erro de Lógica
                 return new LogicErrorAbyss(position);
+
             case 2:
+                // Exceção
                 return new ExceptionAbyss(position);
 
+            case 3:
+                // File Not Found
+                return new FileNotFoundExceptionAbyss(position);
 
             case 4:
                 // Crash de Memória
                 return new MemoryCrashAbyss(position);
+
+            case 5:
+                // Código Duplicado
+                return  new DuplicatedCodeAbyss(position);
+
+            case 6:
+                // Efeitos Secundários
+                return new SecondaryEffects(position);
+
             default:
                 // ID que ainda não está implementado → devolve null
                 return null;
