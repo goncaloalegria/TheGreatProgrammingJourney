@@ -2,7 +2,7 @@ package pt.ulusofona.lp2.greatprogrammingjourney;
 
 public class DuplicatedCodeAbyss extends Abyss{
 
-    private static final int ID = 4;
+    private static final int ID = 5;
     private static final String NAME = "Código Duplicado";
     private static final String IMAGE_NAME = "duplicated-code.png";
 
