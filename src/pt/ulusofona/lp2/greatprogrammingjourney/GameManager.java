@@ -342,26 +342,32 @@ public class GameManager {
             }
         }
 
-        // 1) id do abismo (string vazia se não houver)
-        String abyssIdStr = "";
         Abyss abyss = abyssesByPosition.get(position);
-        if (abyss != null) {
-            abyssIdStr = String.valueOf(abyss.getId());
+        Tool tool = toolsByPosition.get(position);
+
+        // Se não houver abismo nem ferramenta → array "vazio" nos índices 1 e 2
+        if (abyss == null && tool == null) {
+            return new String[]{programmersStr, "", ""};
         }
 
-        // 2) id da ferramenta (string vazia se não houver)
-        String toolIdStr = "";
-        Tool tool = toolsByPosition.get(position);
-        if (tool != null) {
-            toolIdStr = String.valueOf(tool.getId());
+        int elementId;
+        String elementType;
+
+        if (abyss != null) {
+            elementId = abyss.getId();
+            elementType = "A:" + abyss.getId();   // tipo de abismo
+        } else { // tool != null
+            elementId = tool.getId();
+            elementType = "T:" + tool.getId();   // tipo de ferramenta
         }
 
         return new String[]{
-                programmersStr,
-                abyssIdStr,
-                toolIdStr
+                programmersStr,              // [0] jogadores
+                String.valueOf(elementId),   // [1] id do elemento
+                elementType                  // [2] "A:id" ou "T:id"
         };
     }
+
 
 
     // --------- Jogador atual / dado ---------
