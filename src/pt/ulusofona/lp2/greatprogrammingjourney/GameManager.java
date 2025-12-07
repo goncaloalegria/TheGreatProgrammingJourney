@@ -123,11 +123,12 @@ public class GameManager {
         usedSlots.add(1);          // casa inicial nunca tem Abyss/Tool
         usedSlots.add(boardSize);  // casa final também não
 
+
         if (abyssesAndTools != null) {
             for (String[] row : abyssesAndTools) {
+                // Linha inválida -> consideramos inválido o ficheiro
                 if (row == null || row.length < 2) {
-                    // Linha inválida → ignora
-                    continue;
+                    return false;
                 }
 
                 int tipo;
@@ -144,13 +145,13 @@ public class GameManager {
                         posFromConfig = Integer.parseInt(row[2]);
                     }
                 } catch (NumberFormatException e) {
-                    // Linha com valores inválidos → ignora
-                    continue;
+                    // Linha com valores inválidos -> ficheiro inválido
+                    return false;
                 }
 
                 if (tipo != 0 && tipo != 1) {
-                    // Tipo desconhecido → ignora
-                    continue;
+                    // Tipo desconhecido -> ficheiro inválido
+                    return false;
                 }
 
                 // 1º: tentar usar a posição do ficheiro se for válida e livre
@@ -174,8 +175,8 @@ public class GameManager {
                     Abyss abyss = createAbyss(abyssOrToolId, pos);
 
                     if (abyss == null) {
-                        // Ainda não sei criar este tipo de abismo → ignora a linha
-                        continue;
+                        // Id inválido -> ficheiro inválido
+                        return false;
                     }
 
                     addAbyss(abyss);
@@ -185,14 +186,15 @@ public class GameManager {
                     Tool tool = createTool(abyssOrToolId, pos);
 
                     if (tool == null) {
-                        // Ainda não sei criar esta Tool → ignora
-                        continue;
+                        // Id inválido -> ficheiro inválido
+                        return false;
                     }
 
                     addTool(tool);
                 }
             }
         }
+
 
         return true;
     }
@@ -314,6 +316,7 @@ public class GameManager {
         return sb.toString();
     }
 
+
     public String[] getSlotInfo(int position) {
         if (position < 1 || position > boardSize) {
             return null;
@@ -350,23 +353,26 @@ public class GameManager {
             return new String[]{programmersStr, "", ""};
         }
 
-        int elementId;
+        String elementName;
         String elementType;
 
         if (abyss != null) {
-            elementId = abyss.getId();
-            elementType = "A:" + abyss.getId();   // tipo de abismo
+            // agora devolvemos o *nome* do abismo no índice 1
+            elementName = abyss.getName();
+            elementType = "A:" + abyss.getId();   // tipo de abismo com id
         } else { // tool != null
-            elementId = tool.getId();
-            elementType = "T:" + tool.getId();   // tipo de ferramenta
+            // e para ferramentas o nome no índice 1
+            elementName = tool.getName();
+            elementType = "T:" + tool.getId();   // tipo de ferramenta com id
         }
 
         return new String[]{
-                programmersStr,              // [0] jogadores
-                String.valueOf(elementId),   // [1] id do elemento
-                elementType                  // [2] "A:id" ou "T:id"
+                programmersStr,   // [0] jogadores
+                elementName,      // [1] nome do elemento (ex: "Erro de sintaxe")
+                elementType       // [2] "A:id" ou "T:id"
         };
     }
+
 
 
 
@@ -591,10 +597,7 @@ public class GameManager {
     }
 
 
-    /**
-     * Aplica o Abismo (se existir) na posição atual do jogador.
-     * Devolve true se o jogador tiver de repetir o turno.
-     */
+    // Método alterado em `src/pt/ulusofona/lp2/greatprogrammingjourney/GameManager.java`
     private boolean applyAbyssIfAny(Programmer programmer,
                                     int fromPosition,
                                     int diceValue) {
@@ -630,7 +633,8 @@ public class GameManager {
         }
 
         // 🔹 Restantes abismos: comportamento normal
-        abyss.applyEffect(programmer, diceValue, fromPosition);
+        // Corrigida a ordem dos parâmetros: primeiro fromPosition, depois diceValue
+        abyss.applyEffect(programmer, fromPosition, diceValue);
 
         // true se o jogador tem de repetir a vez (ex: Crash de Memória)
         return abyss.forcesRepeatTurn();
