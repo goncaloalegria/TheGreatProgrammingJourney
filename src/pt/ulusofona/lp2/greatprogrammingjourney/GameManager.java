@@ -678,6 +678,9 @@ public class GameManager {
     }
 
 
+    /// Método que aplica Abismos/Tools e avança o turno
+
+
 
     public String reactToAbyssOrTool() {
         if (!pendingReaction || gameOver || lastPlayerId == null) {
