@@ -1,12 +1,12 @@
 package pt.ulusofona.lp2.greatprogrammingjourney;
 
-public class MemoryCrashAbyss extends Abyss {
+public class CrashAbyss extends Abyss {
 
     public static final int ID = 4;
     private static final String NAME = "Crash de Memória";
     private static final String IMAGE_NAME = "crash.png"; // tem de existir em /images do jar
 
-    public MemoryCrashAbyss(int position) {
+    public CrashAbyss(int position) {
         super(ID, NAME, position);
     }
 
