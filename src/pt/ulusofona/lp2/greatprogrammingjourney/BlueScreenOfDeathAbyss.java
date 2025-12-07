@@ -15,7 +15,7 @@ public class BlueScreenOfDeathAbyss extends Abyss{
 
         }
         // Aqui coloco o efeito do Blue Screen of Death
-        programmer.setState("Derrotado pelo Blue Screen of Death");
+        programmer.setState("Derrotado");
 
     }
 

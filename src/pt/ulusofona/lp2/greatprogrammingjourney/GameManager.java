@@ -591,6 +591,10 @@ public class GameManager {
     }
 
 
+    /**
+     * Aplica o Abismo (se existir) na posição atual do jogador.
+     * Devolve true se o jogador tiver de repetir o turno.
+     */
     private boolean applyAbyssIfAny(Programmer programmer,
                                     int fromPosition,
                                     int diceValue) {
@@ -602,29 +606,66 @@ public class GameManager {
         Abyss abyss = abyssesByPosition.get(currentPos);
 
         if (abyss == null) {
-            // (no futuro podes tratar Tools aqui também, mas isso será feito antes dos Abismos)
+            // Não há abismo nesta casa
+            this.lastAbyss = null;
             return false;
         }
 
         // guardar o abismo que foi ativado nesta jogada
         this.lastAbyss = abyss;
-
         int abyssId = abyss.getId();
 
-        //  Comportamento especial para o abismo 8 (Infinite Loop)
+        // 🔹 Caso especial: ABISMO 8 – Infinite loop
         if (abyssId == 8) {
             handleInfiniteLoopAbyss(programmer, currentPos);
-            // Não é referido nada sobre repetir turno -> assumimos que NÃO repete
+            // Não há repetição de turno neste abismo
             return false;
         }
 
+        // 🔹 Caso especial: ABISMO 9 – Segmentation Fault
+        if (abyssId == 9) {
+            handleSegmentationFaultAbyss(currentPos);
+            // Também aqui assumimos que não há repetição de turno
+            return false;
+        }
+
+        // 🔹 Restantes abismos: comportamento normal
         abyss.applyEffect(programmer, diceValue, fromPosition);
 
         // true se o jogador tem de repetir a vez (ex: Crash de Memória)
         return abyss.forcesRepeatTurn();
     }
 
-// o metodo seguinte trata da logica do abismos 8 (Infinite Loop)
+    private void handleSegmentationFaultAbyss(int currentPos) {
+        ArrayList<Programmer> onSlot = new ArrayList<>();
+
+        for (Programmer p : programmers) {
+            if (p.getPosition() == currentPos && !"Derrotado".equals(p.getState())) {
+                onSlot.add(p);
+            }
+        }
+
+        // Só faz efeito se houver 2 ou mais
+        if (onSlot.size() < 2) {
+            return;
+        }
+
+        for (Programmer p : onSlot) {
+            int newPos = p.getPosition() - 3;
+            if (newPos < 1) {
+                newPos = 1;
+            }
+            p.setPosition(newPos);
+
+            // Se estava preso num ciclo infinito e foi empurrado, liberta
+            if ("Preso".equals(p.getState())) {
+                p.setState("Em Jogo");
+            }
+        }
+    }
+
+
+    // o metodo seguinte trata da logica do abismos 8 (Infinite Loop)
     private void handleInfiniteLoopAbyss(Programmer current, int currentPos) {
         // Procurar se já existe alguém preso nesta casa
         Programmer alreadyTrapped = null;
@@ -648,39 +689,6 @@ public class GameManager {
         }
     }
 
-    //metodo para o abismo 9 (que nao é bem um abismo mas sim uma regra)
-    private void handleSegmentationFaultRule(int position) {
-        ArrayList<Programmer> onSlot = new ArrayList<>();
-
-        for (Programmer p : programmers) {
-            if (p.getPosition() == position && !"Derrotado".equals(p.getState())) {
-                onSlot.add(p);
-            }
-        }
-
-        // Só faz efeito se houver 2 ou mais
-        if (onSlot.size() < 2) {
-            return;
-        }
-
-        for (Programmer p : onSlot) {
-            int newPos = p.getPosition() - 3;
-            if (newPos < 1) {
-                newPos = 1;
-            }
-            p.setPosition(newPos);
-
-            // Se estava preso num ciclo infinito e foi empurrado, faz sentido libertar
-            if ("Preso".equals(p.getState())) {
-                p.setState("Em Jogo");
-            }
-        }
-    }
-
-
-    /// Método que aplica Abismos/Tools e avança o turno
-
-
 
     public String reactToAbyssOrTool() {
         if (!pendingReaction || gameOver || lastPlayerId == null) {
@@ -701,11 +709,15 @@ public class GameManager {
             this.lastTool = toolOnSlot;
             toolsByPosition.remove(currentPos);
         }
+
+        // 2) Aplicar Abismo (se houver)
         boolean repeatTurn = applyAbyssIfAny(current, lastFromPosition, lastDiceValue);
 
-        // aqui esta implmentado o abismo 9
-        handleSegmentationFaultRule(current.getPosition());
+        // 🔹 3) Regra global do Segmentation Fault:
+        //    se houver 2+ jogadores nesta casa, todos recuam 3 casas
+        handleSegmentationFaultAbyss(current.getPosition());
 
+        // 4) Atualizar número de turnos
         turnCount++;
 
         // 5) Verificar se o jogador (depois de tudo) está na casa final
@@ -754,6 +766,7 @@ public class GameManager {
 
         return sb.toString();
     }
+
 
 
     private Abyss createAbyss(int abyssId, int position) {
