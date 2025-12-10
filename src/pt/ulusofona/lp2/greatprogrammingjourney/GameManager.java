@@ -444,13 +444,16 @@ public class GameManager {
 
     /**
      * Verifica se há vitória por eliminação (só um jogador ativo).
+     * Jogadores presos ainda contam como ativos (não foram eliminados).
      */
     private boolean checkVictoryByElimination() {
         int activeCount = 0;
         Integer lastActiveId = null;
 
         for (Programmer p : programmers) {
-            if (p.isPlaying()) {
+            // Jogadores "Em Jogo" ou "Preso" ainda estão ativos
+            // Só jogadores "Derrotado" é que foram eliminados
+            if (!p.isDefeated()) {
                 activeCount++;
                 lastActiveId = p.getId();
             }

@@ -217,7 +217,8 @@ public class Programmer {
                 name,
                 getOrderedLanguages(),
                 color,
-                String.valueOf(position)
+                String.valueOf(position),
+                state
         };
     }
 
