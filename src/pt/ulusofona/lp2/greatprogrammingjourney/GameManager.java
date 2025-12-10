@@ -279,9 +279,11 @@ public class GameManager {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < ordered.size(); i++) {
             Programmer p = ordered.get(i);
-            sb.append(p.getInfoAsString());
+            sb.append(p.getName())
+                    .append(" : ")
+                    .append(p.getToolsInfo());
             if (i < ordered.size() - 1) {
-                sb.append("\n");
+                sb.append(" | ");
             }
         }
         return sb.toString();
