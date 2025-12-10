@@ -5,22 +5,22 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Ferramenta Tratamento de Excepções (ID 3)
- * Anula os abismos que causam interrupções inesperadas ou falhas críticas:
- * - Abismo 2 (Exception)
+ * Ferramenta Testes Unitários (ID 2)
+ * Anula os abismos que causam erros de execução ou problemas de qualidade:
+ * - Abismo 3 (FileNotFoundException)
  * - Abismo 7 (Blue Screen of Death)
  */
-public class TratamentoExcecoesTool extends Tool {
+public class UnitTestTool extends Tool {
 
-    public static final int ID = 3;
-    private static final String NAME = "Tratamento de Excepções";
-    private static final String IMAGE_NAME = "exception.png";
+    public static final int ID = 2;
+    private static final String NAME = "Testes Unitários";
+    private static final String IMAGE_NAME = "unit-tests.png";
 
     // IDs dos abismos que esta ferramenta pode anular
     private static final Set<Integer> CANCELLABLE_ABYSSES =
-            new HashSet<>(Arrays.asList(2, 7));
+            new HashSet<>(Arrays.asList(3, 7));
 
-    public TratamentoExcecoesTool(int position) {
+    public UnitTestTool(int position) {
         super(ID, NAME, position);
     }
 

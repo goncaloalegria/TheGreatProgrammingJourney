@@ -730,13 +730,13 @@ public class GameManager {
     private Tool createTool(int toolId, int position) {
         switch (toolId) {
             case 0:
-                return new HerancaTool(position);
+                return new InheritanceTool(position);
             case 1:
-                return new ProgramacaoFuncionalTool(position);
+                return new FunctionalProgrammingTool(position);
             case 2:
-                return new TestesUnitariosTool(position);
+                return new UnitTestTool(position);
             case 3:
-                return new TratamentoExcecoesTool(position);
+                return new ExceptionTool(position);
             case 4:
                 return new IdeTool(position);
             case 5:

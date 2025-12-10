@@ -5,22 +5,22 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Ferramenta Programação Funcional (ID 1)
- * Anula os abismos relacionados a mudanças de estado ou lógica complexa:
- * - Abismo 1 (Erro de Lógica)
- * - Abismo 2 (Exception)
+ * Ferramenta Herança (ID 0)
+ * Anula os abismos relacionados a reutilização de código:
+ * - Abismo 5 (Código Duplicado)
+ * - Abismo 6 (Efeitos Secundários)
  */
-public class ProgramacaoFuncionalTool extends Tool {
+public class InheritanceTool extends Tool {
 
-    public static final int ID = 1;
-    private static final String NAME = "Programação Funcional";
-    private static final String IMAGE_NAME = "functional.png";
+    public static final int ID = 0;
+    private static final String NAME = "Herança";
+    private static final String IMAGE_NAME = "inheritance.png";
 
     // IDs dos abismos que esta ferramenta pode anular
     private static final Set<Integer> CANCELLABLE_ABYSSES =
-            new HashSet<>(Arrays.asList(1, 2));
+            new HashSet<>(Arrays.asList(5, 6));
 
-    public ProgramacaoFuncionalTool(int position) {
+    public InheritanceTool(int position) {
         super(ID, NAME, position);
     }
 

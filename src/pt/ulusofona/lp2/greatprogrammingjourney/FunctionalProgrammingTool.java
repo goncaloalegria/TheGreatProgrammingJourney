@@ -5,22 +5,22 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Ferramenta Testes Unitários (ID 2)
- * Anula os abismos que causam erros de execução ou problemas de qualidade:
- * - Abismo 3 (FileNotFoundException)
- * - Abismo 7 (Blue Screen of Death)
+ * Ferramenta Programação Funcional (ID 1)
+ * Anula os abismos relacionados a mudanças de estado ou lógica complexa:
+ * - Abismo 1 (Erro de Lógica)
+ * - Abismo 2 (Exception)
  */
-public class TestesUnitariosTool extends Tool {
+public class FunctionalProgrammingTool extends Tool {
 
-    public static final int ID = 2;
-    private static final String NAME = "Testes Unitários";
-    private static final String IMAGE_NAME = "unit-tests.png";
+    public static final int ID = 1;
+    private static final String NAME = "Programação Funcional";
+    private static final String IMAGE_NAME = "functional.png";
 
     // IDs dos abismos que esta ferramenta pode anular
     private static final Set<Integer> CANCELLABLE_ABYSSES =
-            new HashSet<>(Arrays.asList(3, 7));
+            new HashSet<>(Arrays.asList(1, 2));
 
-    public TestesUnitariosTool(int position) {
+    public FunctionalProgrammingTool(int position) {
         super(ID, NAME, position);
     }
 

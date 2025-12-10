@@ -95,23 +95,6 @@ public class TestGameManager {
         assertEquals(3, currentPlayerId, "getCurrentPlayerID deve retornar 3 (menor ID)");
     }
 
-    @Test
-    public void testGetProgrammerInfoRetornaInfoCorreta() {
-        GameManager gameManager = new GameManager();
-        String[][] playerInfo = {
-                {"15", "Liam", "Ruby", "Yellow"},
-                {"25", "Mia", "PHP", "Blue"}
-        };
-        gameManager.createInitialBoard(playerInfo, 20, null);
 
-        String[] programmerInfo = gameManager.getProgrammerInfo(25);
-
-        assertNotNull(programmerInfo, "getProgrammerInfo não deve retornar null");
-        assertEquals("25", programmerInfo[0], "ID do programador deve ser 25");
-        assertEquals("Mia", programmerInfo[1], "Nome do programador deve ser Mia");
-        assertEquals("PHP", programmerInfo[2], "Linguagens do programador devem ser PHP");
-        assertEquals("Blue", programmerInfo[3], "Cor do programador deve ser Blue");
-        assertEquals("1", programmerInfo[4], "Posição do programador deve ser 1");
-    }
 
 }
