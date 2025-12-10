@@ -39,4 +39,11 @@ public abstract class Tool {
 
     // Nome do ficheiro de imagem (ex: "tool-laptop.png")
     public abstract String getImageName();
+
+    /**
+     * Verifica se esta ferramenta pode anular um determinado abismo.
+     * @param abyssId o ID do abismo a verificar
+     * @return true se a ferramenta pode anular o abismo, false caso contrário
+     */
+    public abstract boolean canCancelAbyss(int abyssId);
 }
