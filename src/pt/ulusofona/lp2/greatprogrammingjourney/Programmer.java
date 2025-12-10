@@ -218,7 +218,8 @@ public class Programmer {
                 getOrderedLanguages(),
                 color,
                 String.valueOf(position),
-                state
+                state,
+                getToolsInfo()
         };
     }
 
