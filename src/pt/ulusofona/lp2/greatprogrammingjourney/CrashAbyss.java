@@ -15,15 +15,13 @@ public class CrashAbyss extends Abyss {
         if (programmer == null) {
             return;
         }
-
-        // O programa "crasha": volta para a posição anterior ao lançamento
-        programmer.setPosition(previousPosition);
+        programmer.setPosition(1); // Recuar para a posição 1
     }
 
     @Override
     public boolean forcesRepeatTurn() {
         // Este abismo obriga o jogador a repetir a vez
-        return true;
+        return false;
     }
 
     @Override
