@@ -26,22 +26,23 @@ public class GameManager {
     private Integer winnerId;
     private int turnCount;
 
-    // Abysses e Tools por posiÃ§Ã£o
+    // Abysses e Tools por posição
     private HashMap<Integer, Abyss> abyssesByPosition;
     private HashMap<Integer, Tool> toolsByPosition;
 
-    // Para posiÃ§Ãµes aleatÃ³rias
+    // Para posições aleatórias
     private Random random;
 
-    // Info da Ãºltima jogada (Ãºtil para a GUI)
+    // Info da última jogada (útil para a GUI)
     private int lastDiceValue = 0;
     private Integer lastPlayerId = null;
     private int lastFromPosition = 0;
     private int lastToPosition = 0;
     private Abyss lastAbyss = null;
-    private Tool lastTool = null;
+    private Tool lastToolUsed = null;      // Ferramenta usada para anular abismo
+    private Tool lastToolCollected = null; // Ferramenta recolhida
 
-    // Indica se hÃ¡ uma jogada pendente de reaÃ§Ã£o (entre moveCurrentPlayer e reactToAbyssOrTool)
+    // Indica se há uma jogada pendente de reação
     private boolean pendingReaction = false;
 
     public GameManager() {
@@ -53,12 +54,12 @@ public class GameManager {
         this.pendingReaction = false;
     }
 
-    // Parte 1: versÃ£o sem configuraÃ§Ã£o de Abysses/Tools
+    // Parte 1: versão sem configuração de Abysses/Tools
     public boolean createInitialBoard(String[][] playerInfo, int boardSize) {
         return createInitialBoard(playerInfo, boardSize, null);
     }
 
-    // Parte 2: versÃ£o completa com AbyssesAndTools
+    // Parte 2: versão completa com AbyssesAndTools
     public boolean createInitialBoard(String[][] playerInfo,
                                       int boardSize,
                                       String[][] abyssesAndTools) {
@@ -109,7 +110,8 @@ public class GameManager {
         this.lastDiceValue = 0;
         this.lastPlayerId = null;
         this.lastAbyss = null;
-        this.lastTool = null;
+        this.lastToolUsed = null;
+        this.lastToolCollected = null;
         this.lastFromPosition = 0;
         this.lastToPosition = 0;
         this.pendingReaction = false;
@@ -118,15 +120,14 @@ public class GameManager {
         abyssesByPosition.clear();
         toolsByPosition.clear();
 
-        // Casas jÃ¡ ocupadas (para evitar conflitos)
+        // Casas já ocupadas (para evitar conflitos)
         HashSet<Integer> usedSlots = new HashSet<>();
         usedSlots.add(1);          // casa inicial nunca tem Abyss/Tool
-        usedSlots.add(boardSize);  // casa final tambÃ©m nÃ£o
+        usedSlots.add(boardSize);  // casa final também não
 
         if (abyssesAndTools != null) {
             for (String[] row : abyssesAndTools) {
                 if (row == null || row.length < 2) {
-                    // Linha invÃ¡lida â†’ ignora
                     continue;
                 }
 
@@ -135,8 +136,6 @@ public class GameManager {
                 int posFromConfig = -1;
 
                 try {
-                    // Esperamos: [0] = tipo (0=Abyss, 1=Tool), [1] = id,
-                    // [2] = posiÃ§Ã£o (opcional)
                     tipo = Integer.parseInt(row[0]);
                     abyssOrToolId = Integer.parseInt(row[1]);
 
@@ -144,51 +143,38 @@ public class GameManager {
                         posFromConfig = Integer.parseInt(row[2]);
                     }
                 } catch (NumberFormatException e) {
-                    // Linha com valores invÃ¡lidos â†’ ignora
                     continue;
                 }
 
                 if (tipo != 0 && tipo != 1) {
-                    // Tipo desconhecido â†’ ignora
                     continue;
                 }
 
-                // 1Âº: tentar usar a posiÃ§Ã£o do ficheiro se for vÃ¡lida e livre
+                // Tentar usar a posição do ficheiro se for válida e livre
                 int pos;
                 if (posFromConfig > 1 && posFromConfig < boardSize
                         && !usedSlots.contains(posFromConfig)) {
                     pos = posFromConfig;
                     usedSlots.add(pos);
                 } else {
-                    // 2Âº: escolher uma posiÃ§Ã£o aleatÃ³ria livre
                     try {
                         pos = getRandomFreeSlot(usedSlots);
                     } catch (IllegalStateException ex) {
-                        // Sem casas livres â†’ nÃ£o conseguimos colocar mais nada
                         break;
                     }
                 }
 
                 if (tipo == 0) {
-                    // 0 = Abyss
                     Abyss abyss = createAbyss(abyssOrToolId, pos);
-
                     if (abyss == null) {
-                        // Ainda nÃ£o sei criar este tipo de abismo â†’ ignora a linha
                         continue;
                     }
-
                     addAbyss(abyss);
-
                 } else {
-                    // 1 = Tool
                     Tool tool = createTool(abyssOrToolId, pos);
-
                     if (tool == null) {
-                        // Ainda nÃ£o sei criar esta Tool â†’ ignora
                         continue;
                     }
-
                     addTool(tool);
                 }
             }
@@ -204,7 +190,6 @@ public class GameManager {
             return false;
         }
 
-        // Validar ID
         int id;
         try {
             id = Integer.parseInt(row[0]);
@@ -216,17 +201,14 @@ public class GameManager {
         }
         seenIds.add(id);
 
-        // Validar nome
         if (row[1] == null || row[1].trim().isEmpty()) {
             return false;
         }
 
-        // Validar linguagens
         if (row[2] == null) {
             return false;
         }
 
-        // Validar cor
         String color = row[3];
         if (color == null || !VALID_COLORS.contains(color)
                 || usedColors.contains(color)) {
@@ -237,22 +219,17 @@ public class GameManager {
         return true;
     }
 
-    // posiÃ§Ãµes para colocar os abismos e tools
     private int getRandomFreeSlot(Set<Integer> usedSlots) {
-        // Vamos tentar algumas vezes atÃ© encontrar uma casa livre
         for (int tries = 0; tries < boardSize * 5; tries++) {
-            // casas vÃ¡lidas para Abyss/Tool: 2 .. boardSize-1
             int pos = 2 + random.nextInt(Math.max(1, boardSize - 2));
             if (!usedSlots.contains(pos)) {
                 usedSlots.add(pos);
                 return pos;
             }
         }
-        throw new IllegalStateException(
-                "NÃ£o hÃ¡ casas livres suficientes para colocar Abysses/Tools");
+        throw new IllegalStateException("Não há casas livres suficientes");
     }
 
-    // Imagem de cada casa (a GUI chama isto)
     public String getImagePng(int position) {
         if (position < 1 || position > boardSize) {
             return null;
@@ -262,19 +239,16 @@ public class GameManager {
             return "glory.png";
         }
 
-        // 1) Abyss na casa?
         Abyss abyss = abyssesByPosition.get(position);
         if (abyss != null) {
-            return abyss.getImageName(); // ex: "crash.png"
+            return abyss.getImageName();
         }
 
-        // 2) Tool na casa?
         Tool tool = toolsByPosition.get(position);
         if (tool != null) {
             return tool.getImageName();
         }
 
-        // 3) Casa normal sem imagem especial
         return null;
     }
 
@@ -294,7 +268,6 @@ public class GameManager {
         return programmer.getInfoAsString();
     }
 
-    // Pedido pela GUI
     public String getProgrammersInfo() {
         if (programmers == null || programmers.isEmpty()) {
             return "";
@@ -319,7 +292,6 @@ public class GameManager {
             return null;
         }
 
-        // 0) jogadores na casa
         String programmersStr = "";
         if (!programmers.isEmpty()) {
             ArrayList<Integer> idsHere = new ArrayList<>();
@@ -343,10 +315,8 @@ public class GameManager {
         }
 
         Abyss abyss = abyssesByPosition.get(position);
-
         Tool tool = toolsByPosition.get(position);
 
-        // Se nÃ£o houver abismo nem ferramenta â†’ array "vazio" nos Ã­ndices 1 e 2
         if (abyss == null && tool == null) {
             return new String[]{programmersStr, "", ""};
         }
@@ -356,19 +326,18 @@ public class GameManager {
 
         if (abyss != null) {
             elementId = abyss.getId();
-            elementType = "A:" + abyss.getId();   // tipo de abismo
-        } else { // tool != null
+            elementType = "A:" + abyss.getId();
+        } else {
             elementId = tool.getId();
-            elementType = "T:" + tool.getId();   // tipo de ferramenta
+            elementType = "T:" + tool.getId();
         }
 
         return new String[]{
-                programmersStr,              // [0] jogadores
-                String.valueOf(elementId),   // [1] id do elemento
-                elementType                  // [2] "A:id" ou "T:id"
+                programmersStr,
+                String.valueOf(elementId),
+                elementType
         };
     }
-    // --------- Jogador atual / dado ---------
 
     public int getCurrentPlayerID() {
         if (turnOrderIds == null || turnOrderIds.isEmpty()) {
@@ -377,7 +346,6 @@ public class GameManager {
         return turnOrderIds.get(turnCursor);
     }
 
-    // MÃ©todos extra (podem ser Ãºteis)
     public String getCurrentPlayerName() {
         int id = getCurrentPlayerID();
         Programmer p = idToProgrammer.get(id);
@@ -400,7 +368,6 @@ public class GameManager {
         return lastDiceValue;
     }
 
-    // Opcional para a GUI, se precisar de nome da imagem do dado
     public String getLastDiceImageName() {
         if (lastDiceValue < 1 || lastDiceValue > 6) {
             return null;
@@ -409,12 +376,9 @@ public class GameManager {
     }
 
     /**
-     * Agora este mÃ©todo apenas:
-     *  - valida o movimento
-     *  - move o jogador para a nova posiÃ§Ã£o
-     *  - guarda informaÃ§Ã£o da jogada
-     *  - marca pendingReaction = true
-     * A aplicaÃ§Ã£o dos Abismos/Tools e avanÃ§o do turno acontece em reactToAbyssOrTool().
+     * Move o jogador atual.
+     * Verifica primeiro se há apenas um jogador ativo (vitória automática).
+     * Salta jogadores presos ou derrotados.
      */
     public boolean moveCurrentPlayer(int nrPositions) {
         if (gameOver) {
@@ -429,7 +393,12 @@ public class GameManager {
             return false;
         }
 
-        // ðŸ”¹ Procurar um jogador "Em Jogo", saltando derrotados
+        // Verificar vitória por eliminação no início do turno
+        if (checkVictoryByElimination()) {
+            return false;
+        }
+
+        // Procurar um jogador que pode jogar, saltando derrotados e presos
         Programmer currentProgrammer = null;
         int currentId = -1;
         int attempts = 0;
@@ -438,42 +407,68 @@ public class GameManager {
             currentId = turnOrderIds.get(turnCursor);
             Programmer candidate = idToProgrammer.get(currentId);
 
-            if (candidate != null && candidate.isPlaying()) {
+            if (candidate != null && candidate.canPlay()) {
                 currentProgrammer = candidate;
                 break;
             }
 
-            // Jogador nulo ou derrotado â†’ passa ao prÃ³ximo
+            // Jogador preso ou derrotado → passa ao próximo
             turnCursor = (turnCursor + 1) % turnOrderIds.size();
             attempts++;
         }
 
-        // Se nÃ£o encontrarmos ninguÃ©m "Em Jogo", o jogo acabou
         if (currentProgrammer == null) {
             gameOver = true;
             return false;
         }
 
-        // guardar info da jogada
+        // Guardar info da jogada
         this.lastDiceValue = nrPositions;
         this.lastPlayerId = currentId;
         this.lastAbyss = null;
-        this.lastTool = null;
+        this.lastToolUsed = null;
+        this.lastToolCollected = null;
 
         int from = currentProgrammer.getPosition();
         int to = calculateNewPosition(from, nrPositions);
         this.lastFromPosition = from;
         this.lastToPosition = to;
 
-        //guarda o movimento do jogador num histÃ³rico implementado no programmer
+        // Registar movimento e mover jogador
         currentProgrammer.recordMove(to);
 
-        // marca que hÃ¡ uma jogada pendente para o reactToAbyssOrTool tratar
         this.pendingReaction = true;
 
         return true;
     }
 
+    /**
+     * Verifica se há vitória por eliminação (só um jogador ativo).
+     */
+    private boolean checkVictoryByElimination() {
+        int activeCount = 0;
+        Integer lastActiveId = null;
+
+        for (Programmer p : programmers) {
+            if (p.isPlaying()) {
+                activeCount++;
+                lastActiveId = p.getId();
+            }
+        }
+
+        if (activeCount == 1 && lastActiveId != null) {
+            gameOver = true;
+            winnerId = lastActiveId;
+            return true;
+        }
+
+        if (activeCount == 0) {
+            gameOver = true;
+            return true;
+        }
+
+        return false;
+    }
 
     private int calculateNewPosition(int from, int nrPositions) {
         int to = from + nrPositions;
@@ -486,13 +481,244 @@ public class GameManager {
         return to;
     }
 
+    /**
+     * Processa a reação a abismos e ferramentas após o movimento.
+     * Ordem: 1) Recolher ferramenta, 2) Aplicar abismo (com possível anulação)
+     */
+    public String reactToAbyssOrTool() {
+        if (!pendingReaction || gameOver || lastPlayerId == null) {
+            return null;
+        }
+
+        Programmer current = idToProgrammer.get(lastPlayerId);
+        if (current == null) {
+            pendingReaction = false;
+            return null;
+        }
+
+        // Reset
+        this.lastAbyss = null;
+        this.lastToolUsed = null;
+        this.lastToolCollected = null;
+
+        StringBuilder sb = new StringBuilder();
+        String playerName = current.getName();
+
+        // 1) Recolher ferramenta se houver na posição atual
+        Tool collectedTool = collectToolIfAny(current);
+        if (collectedTool != null) {
+            this.lastToolCollected = collectedTool;
+            sb.append(playerName)
+                    .append(" apanhou a ferramenta \"")
+                    .append(collectedTool.getName())
+                    .append("\".");
+        }
+
+        // 2) Aplicar Abismo, se houver
+        boolean repeatTurn = applyAbyssIfAny(current, lastFromPosition, lastDiceValue, sb, playerName);
+
+        // Atualizar número de turnos
+        turnCount++;
+
+        // Verificar se o jogador chegou ao fim
+        if (current.getPosition() == boardSize && current.isPlaying()) {
+            gameOver = true;
+            winnerId = current.getId();
+        } else if (!repeatTurn) {
+            // Avançar para o próximo jogador
+            if (turnOrderIds != null && !turnOrderIds.isEmpty()) {
+                turnCursor = (turnCursor + 1) % turnOrderIds.size();
+            }
+        }
+
+        pendingReaction = false;
+
+        if (sb.length() == 0) {
+            return null;
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Recolhe uma ferramenta se existir na posição atual do jogador.
+     * Só recolhe se o jogador não tiver já uma ferramenta do mesmo tipo.
+     */
+    private Tool collectToolIfAny(Programmer programmer) {
+        if (programmer == null) {
+            return null;
+        }
+
+        int currentPos = programmer.getPosition();
+        Tool tool = toolsByPosition.get(currentPos);
+
+        if (tool == null) {
+            return null;
+        }
+
+        // Verificar se o jogador já tem uma ferramenta deste tipo
+        if (programmer.hasToolOfType(tool.getId())) {
+            // Já tem - não recolhe (ferramenta fica na casa)
+            return null;
+        }
+
+        // Adicionar ferramenta ao inventário do jogador
+        programmer.addTool(tool);
+
+        // Remover ferramenta do tabuleiro
+        toolsByPosition.remove(currentPos);
+
+        return tool;
+    }
+
+    /**
+     * Aplica o abismo na posição atual do jogador.
+     * Verifica se o jogador tem ferramenta para anular.
+     * Trata casos especiais: Segmentation Fault, Ciclo Infinito.
+     */
+    private boolean applyAbyssIfAny(Programmer programmer, int fromPosition,
+                                    int diceValue, StringBuilder sb, String playerName) {
+        if (programmer == null) {
+            return false;
+        }
+
+        int currentPos = programmer.getPosition();
+        Abyss abyss = abyssesByPosition.get(currentPos);
+
+        if (abyss == null) {
+            return false;
+        }
+
+        this.lastAbyss = abyss;
+
+        // Verificar se o jogador tem uma ferramenta que anula este abismo
+        Tool cancellingTool = programmer.findToolToCancelAbyss(abyss.getId());
+
+        if (cancellingTool != null) {
+            // Usar a ferramenta para anular o abismo
+            this.lastToolUsed = cancellingTool;
+            programmer.removeTool(cancellingTool);
+
+            if (sb.length() > 0) {
+                sb.append(" ");
+            }
+            sb.append(playerName)
+                    .append(" caiu no abismo \"")
+                    .append(abyss.getName())
+                    .append("\" mas usou a ferramenta \"")
+                    .append(cancellingTool.getName())
+                    .append("\" para anular o efeito.");
+
+            return false;
+        }
+
+        // Não tem ferramenta - aplicar efeito do abismo
+        if (sb.length() > 0) {
+            sb.append(" ");
+        }
+        sb.append(playerName)
+                .append(" caiu no abismo \"")
+                .append(abyss.getName())
+                .append("\".");
+
+        // Tratar Segmentation Fault especialmente
+        if (abyss.getId() == SegmentationFaultAbyss.ID) {
+            return applySegmentationFault(programmer, currentPos, sb);
+        }
+
+        // Aplicar efeito normal do abismo
+        abyss.applyEffect(programmer, diceValue, fromPosition);
+
+        return abyss.forcesRepeatTurn();
+    }
+
+    /**
+     * Aplica o efeito do Segmentation Fault.
+     * Se 2+ jogadores na mesma casa, todos recuam 3 casas.
+     */
+    private boolean applySegmentationFault(Programmer triggerer, int position, StringBuilder sb) {
+        // Contar jogadores na mesma posição
+        List<Programmer> playersHere = new ArrayList<>();
+        for (Programmer p : programmers) {
+            if (p.getPosition() == position && !p.isDefeated()) {
+                playersHere.add(p);
+            }
+        }
+
+        if (playersHere.size() < 2) {
+            // Só 1 jogador - nada acontece
+            return false;
+        }
+
+        // 2+ jogadores - todos recuam 3 casas
+        int retreat = SegmentationFaultAbyss.RETREAT_POSITIONS;
+        for (Programmer p : playersHere) {
+            int newPos = Math.max(1, p.getPosition() - retreat);
+            p.setPosition(newPos);
+        }
+
+        // Verificar se caíram em novo abismo (pode causar cadeia)
+        for (Programmer p : playersHere) {
+            checkAbyssAfterRetreat(p);
+        }
+
+        return false;
+    }
+
+    /**
+     * Verifica e aplica abismo após recuo (para Segmentation Fault em cadeia).
+     */
+    private void checkAbyssAfterRetreat(Programmer programmer) {
+        if (programmer == null || programmer.isDefeated()) {
+            return;
+        }
+
+        int pos = programmer.getPosition();
+        Abyss abyss = abyssesByPosition.get(pos);
+
+        if (abyss == null) {
+            return;
+        }
+
+        // Se for Segmentation Fault, pode causar nova cadeia
+        if (abyss.getId() == SegmentationFaultAbyss.ID) {
+            List<Programmer> playersHere = new ArrayList<>();
+            for (Programmer p : programmers) {
+                if (p.getPosition() == pos && !p.isDefeated()) {
+                    playersHere.add(p);
+                }
+            }
+
+            if (playersHere.size() >= 2) {
+                int retreat = SegmentationFaultAbyss.RETREAT_POSITIONS;
+                for (Programmer p : playersHere) {
+                    int newPos = Math.max(1, p.getPosition() - retreat);
+                    p.setPosition(newPos);
+                }
+                // Verificar recursivamente
+                for (Programmer p : playersHere) {
+                    checkAbyssAfterRetreat(p);
+                }
+            }
+        } else {
+            // Aplicar efeito do abismo normalmente
+            Tool cancellingTool = programmer.findToolToCancelAbyss(abyss.getId());
+            if (cancellingTool != null) {
+                programmer.removeTool(cancellingTool);
+            } else {
+                abyss.applyEffect(programmer, 0, pos);
+            }
+        }
+    }
+
     public boolean gameIsOver() {
         if (gameOver) {
             return true;
         }
 
+        // Verificar se alguém chegou ao fim
         for (Programmer programmer : programmers) {
-            if (programmer.getPosition() == boardSize) {
+            if (programmer.getPosition() == boardSize && programmer.isPlaying()) {
                 gameOver = true;
                 if (winnerId == null) {
                     winnerId = programmer.getId();
@@ -500,7 +726,9 @@ public class GameManager {
                 return true;
             }
         }
-        return false;
+
+        // Verificar vitória por eliminação
+        return checkVictoryByElimination();
     }
 
     public ArrayList<String> getGameResults() {
@@ -556,10 +784,10 @@ public class GameManager {
             int posB = b.getPosition();
 
             if (posA != posB) {
-                return Integer.compare(posB, posA); // Descendente por posiÃ§Ã£o
+                return Integer.compare(posB, posA);
             }
 
-            return a.getName().compareToIgnoreCase(b.getName()); // Ascendente por nome
+            return a.getName().compareToIgnoreCase(b.getName());
         });
     }
 
@@ -570,7 +798,6 @@ public class GameManager {
     }
 
     public HashMap<String, String> customizeBoard() {
-        // podes acrescentar chaves como "hasNewAbyss" / "hasNewTool" aqui mais tarde
         return new HashMap<>();
     }
 
@@ -588,117 +815,7 @@ public class GameManager {
         toolsByPosition.put(tool.getPosition(), tool);
     }
 
-    /**
-     * Aplica o Abismo (se existir) na posiÃ§Ã£o atual do jogador.
-     * Devolve true se o jogador tiver de repetir o turno.
-     */
-    private boolean applyAbyssIfAny(Programmer programmer,
-                                    int fromPosition,
-                                    int diceValue) {
-        if (programmer == null) {
-            return false;
-        }
-
-        int currentPos = programmer.getPosition();
-        Abyss abyss = abyssesByPosition.get(currentPos);
-
-        if (abyss == null) {
-            // (no futuro podes tratar Tools aqui tambÃ©m, mas a aplicaÃ§Ã£o de Tools
-            //  provavelmente serÃ¡ feita primeiro, antes dos Abismos)
-            return false;
-        }
-
-        // guardar o abismo que foi ativado nesta jogada
-        this.lastAbyss = abyss;
-
-        abyss.applyEffect(programmer, diceValue, fromPosition);
-
-        // true se o jogador tem de repetir a vez (ex: Crash de MemÃ³ria)
-        return abyss.forcesRepeatTurn();
-    }
-
-    /**
-     * Agora este mÃ©todo:
-     *  - sÃ³ faz alguma coisa se existir uma jogada pendente (pendingReaction == true)
-     *  - aplica o Abismo (e no futuro Tools) ao jogador que acabou de se mover
-     *  - atualiza turnCount, gameOver, winnerId e turnCursor
-     *  - devolve uma mensagem textual a descrever o que aconteceu
-     */
-    public String reactToAbyssOrTool() {
-        // Se nÃ£o hÃ¡ jogada pendente, ou jogo jÃ¡ terminou, nÃ£o hÃ¡ reaÃ§Ã£o
-        if (!pendingReaction || gameOver || lastPlayerId == null) {
-            return null;
-        }
-
-        Programmer current = idToProgrammer.get(lastPlayerId);
-        if (current == null || !current.isPlaying()) {
-            pendingReaction = false;
-            return null;
-        }
-
-        // Aplicar Abismo, se houver, na posiÃ§Ã£o atual do jogador
-        boolean repeatTurn = applyAbyssIfAny(current, lastFromPosition, lastDiceValue);
-
-        // (No futuro: aqui tambÃ©m se aplicam Tools, antes dos Abismos,
-        //  e podes introduzir lÃ³gica de ferramentas que anulam abismos.)
-
-        // Atualizar nÃºmero de turnos
-        turnCount++;
-
-        // Verificar se o jogador chegou ao fim depois da reaÃ§Ã£o
-        if (current.getPosition() == boardSize) {
-            gameOver = true;
-            winnerId = current.getId();
-        } else if (!repeatTurn) {
-            // Se nÃ£o repete turno, avanÃ§amos para o prÃ³ximo jogador
-            if (turnOrderIds != null && !turnOrderIds.isEmpty()) {
-                turnCursor = (turnCursor + 1) % turnOrderIds.size();
-            }
-        }
-        // Se repeatTurn == true e o jogo nÃ£o acabou, o turnCursor mantÃ©m-se
-        // â†’ o mesmo jogador joga outra vez
-
-        // Construir mensagem textual para GUI/DP
-        String playerName = "O jogador";
-        if (lastPlayerId != null) {
-            Programmer p = idToProgrammer.get(lastPlayerId);
-            if (p != null) {
-                playerName = p.getName();
-            }
-        }
-
-        StringBuilder sb = new StringBuilder();
-
-        if (lastAbyss != null) {
-            sb.append(playerName)
-                    .append(" caiu no abismo \"")
-                    .append(lastAbyss.getName())
-                    .append("\".");
-        }
-
-        if (lastTool != null) {
-            if (sb.length() > 0) {
-                sb.append(" ");
-            }
-            sb.append(playerName)
-                    .append(" encontrou a ferramenta \"")
-                    .append(lastTool.getName())
-                    .append("\".");
-        }
-
-        // Limpar flag de jogada pendente
-        pendingReaction = false;
-
-        if (sb.length() == 0) {
-            // NÃ£o houve abismo nem ferramenta nesta jogada
-            return null;
-        }
-
-        return sb.toString();
-    }
-
-    // Abyss com base no ID
-    // (garante que os IDs usados aqui batem com os das classes concretas)
+    // Fábrica de Abyss
     private Abyss createAbyss(int abyssId, int position) {
         switch (abyssId) {
             case 0:
@@ -719,14 +836,14 @@ public class GameManager {
                 return new BlueScreenOfDeathAbyss(position);
             case 8:
                 return new InfiniteLoopAbyss(position);
-
+            case 9:
+                return new SegmentationFaultAbyss(position);
             default:
-                // IDs ainda nÃ£o implementados â†’ devolve null
                 return null;
         }
     }
 
-    // Fábrica de Tools com base no ID
+    // Fábrica de Tools
     private Tool createTool(int toolId, int position) {
         switch (toolId) {
             case 0:
@@ -746,53 +863,52 @@ public class GameManager {
         }
     }
 
-
     public boolean saveGame(File file) {
         if (file == null) {
             return false;
         }
 
         try (PrintWriter out = new PrintWriter(new FileWriter(file))) {
-            // 1) Tamanho do tabuleiro
             out.println(boardSize);
 
-            // 2) Programadores
             out.println(programmers.size());
             for (Programmer p : programmers) {
-                // id|name|languages|color|position|state
+                // Guardar também as ferramentas do jogador
+                StringBuilder toolIds = new StringBuilder();
+                for (Tool t : p.getTools()) {
+                    if (toolIds.length() > 0) {
+                        toolIds.append(",");
+                    }
+                    toolIds.append(t.getId());
+                }
+
                 out.println(
                         p.getId() + "|" +
                                 p.getName() + "|" +
                                 p.getLanguages() + "|" +
                                 p.getColor() + "|" +
                                 p.getPosition() + "|" +
-                                p.getState()
+                                p.getState() + "|" +
+                                toolIds.toString()
                 );
             }
 
-            // 3) Abysses
-            List<Integer> abyssPositions =
-                    new ArrayList<>(abyssesByPosition.keySet());
+            List<Integer> abyssPositions = new ArrayList<>(abyssesByPosition.keySet());
             Collections.sort(abyssPositions);
             out.println(abyssPositions.size());
             for (Integer pos : abyssPositions) {
                 Abyss a = abyssesByPosition.get(pos);
-                // idAbyss|position
                 out.println(a.getId() + "|" + pos);
             }
 
-            // 4) Tools
-            List<Integer> toolPositions =
-                    new ArrayList<>(toolsByPosition.keySet());
+            List<Integer> toolPositions = new ArrayList<>(toolsByPosition.keySet());
             Collections.sort(toolPositions);
             out.println(toolPositions.size());
             for (Integer pos : toolPositions) {
                 Tool t = toolsByPosition.get(pos);
-                // idTool|position
                 out.println(t.getId() + "|" + pos);
             }
 
-            // 5) Ordem de jogada
             if (turnOrderIds == null) {
                 out.println(0);
             } else {
@@ -802,27 +918,23 @@ public class GameManager {
                 }
             }
 
-            // 6) Estado do jogo
             out.println(turnCursor);
             out.println(gameOver);
             out.println(winnerId == null ? -1 : winnerId);
             out.println(turnCount);
 
-            // 7) Info da Ãºltima jogada
             out.println(lastDiceValue);
             out.println(lastPlayerId == null ? -1 : lastPlayerId);
             out.println(lastFromPosition);
             out.println(lastToPosition);
 
-            // Nota: pendingReaction, lastAbyss, lastTool nÃ£o sÃ£o persistidos aqui.
             return true;
         } catch (IOException e) {
             return false;
         }
     }
 
-    public void loadGame(File file)
-            throws InvalidFileException, FileNotFoundException {
+    public void loadGame(File file) throws InvalidFileException, FileNotFoundException {
         validateLoadFile(file);
 
         try (Scanner scanner = new Scanner(file)) {
@@ -834,21 +946,17 @@ public class GameManager {
             loadGameState(scanner);
             loadLastMoveInfo(scanner);
             ensureRandom();
-            // Depois de carregar de ficheiro, assumimos que nÃ£o hÃ¡ jogada pendente
             this.pendingReaction = false;
         } catch (InvalidFileException e) {
-            // Reencaminhamos a exceÃ§Ã£o especÃ­fica
             throw e;
         } catch (Exception e) {
-            // Qualquer outra coisa Ã© formato invÃ¡lido
-            throw new InvalidFileException("Formato de ficheiro invÃ¡lido");
+            throw new InvalidFileException("Formato de ficheiro inválido");
         }
     }
 
-
     private void validateLoadFile(File file) throws FileNotFoundException {
         if (file == null || !file.exists() || !file.isFile()) {
-            throw new FileNotFoundException("Ficheiro nÃ£o encontrado");
+            throw new FileNotFoundException("Ficheiro não encontrado");
         }
     }
 
@@ -875,8 +983,7 @@ public class GameManager {
             String line = scanner.nextLine();
             String[] parts = line.split("\\|", -1);
             if (parts.length < 6) {
-                throw new InvalidFileException(
-                        "Linha de programador invÃ¡lida: " + line);
+                throw new InvalidFileException("Linha de programador inválida: " + line);
             }
 
             int id = Integer.parseInt(parts[0]);
@@ -889,6 +996,18 @@ public class GameManager {
             Programmer p = new Programmer(id, name, languages, color);
             p.setPosition(position);
             p.setState(state);
+
+            // Carregar ferramentas do jogador (se existirem)
+            if (parts.length >= 7 && !parts[6].isEmpty()) {
+                String[] toolIdStrs = parts[6].split(",");
+                for (String toolIdStr : toolIdStrs) {
+                    int toolId = Integer.parseInt(toolIdStr.trim());
+                    Tool tool = createTool(toolId, 0); // posição 0 porque está no inventário
+                    if (tool != null) {
+                        p.addTool(tool);
+                    }
+                }
+            }
 
             programmers.add(p);
             idToProgrammer.put(id, p);
@@ -910,7 +1029,7 @@ public class GameManager {
             String line = scanner.nextLine();
             String[] parts = line.split("\\|", -1);
             if (parts.length < 2) {
-                throw new InvalidFileException("Linha de abismo invÃ¡lida: " + line);
+                throw new InvalidFileException("Linha de abismo inválida: " + line);
             }
 
             int abyssId = Integer.parseInt(parts[0]);
@@ -938,8 +1057,7 @@ public class GameManager {
             String line = scanner.nextLine();
             String[] parts = line.split("\\|", -1);
             if (parts.length < 2) {
-                throw new InvalidFileException(
-                        "Linha de ferramenta invÃ¡lida: " + line);
+                throw new InvalidFileException("Linha de ferramenta inválida: " + line);
             }
 
             int toolId = Integer.parseInt(parts[0]);
@@ -962,8 +1080,7 @@ public class GameManager {
 
         for (int i = 0; i < orderSize; i++) {
             if (!scanner.hasNextLine()) {
-                throw new InvalidFileException(
-                        "Dados da ordem de jogo incompletos");
+                throw new InvalidFileException("Dados da ordem de jogo incompletos");
             }
             int id = Integer.parseInt(scanner.nextLine().trim());
             turnOrderIds.add(id);
@@ -971,26 +1088,22 @@ public class GameManager {
     }
 
     private void loadGameState(Scanner scanner) throws InvalidFileException {
-        // turnCursor
         if (!scanner.hasNextLine()) {
             throw new InvalidFileException("Faltam dados do estado do jogo");
         }
         turnCursor = Integer.parseInt(scanner.nextLine().trim());
 
-        // gameOver
         if (!scanner.hasNextLine()) {
             throw new InvalidFileException("Faltam dados do estado do jogo");
         }
         gameOver = Boolean.parseBoolean(scanner.nextLine().trim());
 
-        // winnerId
         if (!scanner.hasNextLine()) {
             throw new InvalidFileException("Faltam dados do estado do jogo");
         }
         int winId = Integer.parseInt(scanner.nextLine().trim());
         winnerId = (winId < 0 ? null : winId);
 
-        // turnCount
         if (!scanner.hasNextLine()) {
             throw new InvalidFileException("Faltam dados do estado do jogo");
         }
@@ -998,7 +1111,6 @@ public class GameManager {
     }
 
     private void loadLastMoveInfo(Scanner scanner) {
-        // Estes campos sÃ£o opcionais no ficheiro. Se nÃ£o existirem, usamos defaults.
         if (scanner.hasNextLine()) {
             lastDiceValue = Integer.parseInt(scanner.nextLine().trim());
         } else {
@@ -1029,7 +1141,8 @@ public class GameManager {
         }
 
         lastAbyss = null;
-        lastTool = null;
+        lastToolUsed = null;
+        lastToolCollected = null;
     }
 
     private void ensureRandom() {

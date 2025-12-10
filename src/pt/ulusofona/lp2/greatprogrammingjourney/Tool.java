@@ -4,7 +4,7 @@ public abstract class Tool {
 
     protected int id;        // ID do tipo de ferramenta
     protected String name;   // Nome da ferramenta
-    protected int position;  // Posição no tabuleiro
+    protected int position;  // Posição no tabuleiro (onde foi colocada)
 
     public Tool(int id, String name, int position) {
         this.id = id;
@@ -37,7 +37,7 @@ public abstract class Tool {
         return name + " (ID: " + id + ", posição: " + position + ")";
     }
 
-    // Nome do ficheiro de imagem (ex: "tool-laptop.png")
+    // Nome do ficheiro de imagem (ex: "inheritance.png")
     public abstract String getImageName();
 
     /**

@@ -14,11 +14,11 @@ public class Programmer {
     private int position;
     private String state;
 
-    // Histórico das últimas posições ANTES de cada jogada “normal”
+    // Histórico das últimas posições ANTES de cada jogada "normal"
     // Vamos guardar até 2 posições anteriores
     private Deque<Integer> positionHistory;
 
-    // Ferramentas (para a Parte 2; por agora pode ficar vazio)
+    // Ferramentas no inventário do jogador
     private List<Tool> tools;
 
     public Programmer(int id, String name, String languages, String color) {
@@ -98,11 +98,54 @@ public class Programmer {
         return positionHistory.peekFirst();
     }
 
-    // ---------- Tools (para o futuro) ----------
+    // ---------- Tools ----------
 
+    /**
+     * Adiciona uma ferramenta ao inventário do jogador.
+     */
     public void addTool(Tool tool) {
         if (tool != null) {
             tools.add(tool);
+        }
+    }
+
+    /**
+     * Verifica se o jogador já tem uma ferramenta de um determinado tipo (ID).
+     */
+    public boolean hasToolOfType(int toolId) {
+        for (Tool tool : tools) {
+            if (tool != null && tool.getId() == toolId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Procura e devolve uma ferramenta que possa anular o abismo dado.
+     * Devolve a ferramenta com o ID mais baixo (prioridade).
+     * @return a ferramenta encontrada, ou null se não houver nenhuma compatível
+     */
+    public Tool findToolToCancelAbyss(int abyssId) {
+        Tool bestTool = null;
+
+        for (Tool tool : tools) {
+            if (tool != null && tool.canCancelAbyss(abyssId)) {
+                if (bestTool == null || tool.getId() < bestTool.getId()) {
+                    bestTool = tool;
+                }
+            }
+        }
+
+        return bestTool;
+    }
+
+    /**
+     * Remove uma ferramenta do inventário do jogador.
+     */
+    public void removeTool(Tool tool) {
+        if (tool != null) {
+            tools.remove(tool);
         }
     }
 
@@ -193,7 +236,32 @@ public class Programmer {
         this.position = newPosition;
     }
 
+    /**
+     * Verifica se o jogador está em jogo (não derrotado nem preso).
+     */
     public boolean isPlaying() {
         return "Em Jogo".equals(state);
+    }
+
+    /**
+     * Verifica se o jogador está preso (Ciclo Infinito).
+     */
+    public boolean isTrapped() {
+        return "Preso".equals(state);
+    }
+
+    /**
+     * Verifica se o jogador foi derrotado (Blue Screen of Death).
+     */
+    public boolean isDefeated() {
+        return "Derrotado".equals(state);
+    }
+
+    /**
+     * Verifica se o jogador pode jogar neste turno.
+     * Só pode jogar se estiver "Em Jogo" (não preso nem derrotado).
+     */
+    public boolean canPlay() {
+        return isPlaying();
     }
 }
