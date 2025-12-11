@@ -18,7 +18,7 @@ public class IdeTool extends Tool {
 
     // IDs dos abismos que esta ferramenta pode anular
     private static final Set<Integer> CANCELLABLE_ABYSSES =
-            new HashSet<>(Arrays.asList(1, 5));
+            new HashSet<>(Arrays.asList(0, 1, 5));
 
     public IdeTool(int position) {
         super(ID, NAME, position);

@@ -530,11 +530,12 @@ public class GameManager {
         }
 
         // 2) Verificar Segmentation Fault (colisão de jogadores na mesma casa)
+        checkSegmentationFault(current, sb);
 
         // 3) Aplicar Abismo, se houver (na nova posição após possível Segmentation Fault)
         boolean repeatTurn = applyAbyssIfAny(current, lastFromPosition, lastDiceValue, sb, playerName);
 
-        checkSegmentationFault(current, sb);
+
 
         // Atualizar número de turnos
         turnCount++;
