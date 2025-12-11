@@ -553,10 +553,11 @@ public class GameManager {
 
         pendingReaction = false;
 
+        if (sb.isEmpty()) {
+            return null;
+        }
 
-
-        //return sb.toString();
-        return null;
+        return sb.toString();
     }
 
 
