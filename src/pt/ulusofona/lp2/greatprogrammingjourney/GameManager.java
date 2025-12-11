@@ -334,19 +334,11 @@ public class GameManager {
             elementType = "T:" + tool.getId();
         }
 
-        if(abyss != null){
-            return new String[]{
-                    programmersStr,
-                    abyss.getName(),
-                    "A:" + abyss.getId()
-            };
-        } else {
-            return new String[]{
-                    programmersStr,
-                    tool.getName(),
-                    "T:" + tool.getId()
-            };
-        }
+        return new String[]{
+                programmersStr,
+                String.valueOf(elementId),
+                elementType
+        };
     }
 
     public int getCurrentPlayerID() {
@@ -560,11 +552,6 @@ public class GameManager {
      * Verifica e aplica Segmentation Fault (regra global).
      * Se 2+ jogadores estiverem na mesma casa, todos recuam 3 casas.
      */
-    /**
-     * Verifica e aplica Segmentation Fault (regra global).
-     * Se 2+ jogadores estiverem na mesma casa, todos recuam 3 casas.
-     * Não há recursão - aplica-se apenas uma vez por turno.
-     */
     private void checkSegmentationFault(Programmer current, StringBuilder sb) {
         if (current == null || current.isDefeated()) {
             return;
@@ -595,6 +582,43 @@ public class GameManager {
         for (Programmer p : playersHere) {
             int newPos = Math.max(1, p.getPosition() - retreat);
             p.setPosition(newPos);
+        }
+
+        // Verificar recursivamente se caíram noutra casa com mais jogadores
+        for (Programmer p : playersHere) {
+            checkSegmentationFaultAfterRetreat(p);
+        }
+    }
+
+    /**
+     * Verifica Segmentation Fault em cadeia após recuo.
+     */
+    private void checkSegmentationFaultAfterRetreat(Programmer programmer) {
+        if (programmer == null || programmer.isDefeated()) {
+            return;
+        }
+
+        int pos = programmer.getPosition();
+
+        // Contar jogadores na mesma posição
+        List<Programmer> playersHere = new ArrayList<>();
+        for (Programmer p : programmers) {
+            if (p.getPosition() == pos && !p.isDefeated()) {
+                playersHere.add(p);
+            }
+        }
+
+        if (playersHere.size() >= 2) {
+            // Mais uma colisão! Todos recuam 3 casas
+            int retreat = 3;
+            for (Programmer p : playersHere) {
+                int newPos = Math.max(1, p.getPosition() - retreat);
+                p.setPosition(newPos);
+            }
+            // Verificar recursivamente
+            for (Programmer p : playersHere) {
+                checkSegmentationFaultAfterRetreat(p);
+            }
         }
     }
 
@@ -810,7 +834,8 @@ public class GameManager {
                 return new BlueScreenOfDeathAbyss(position);
             case 8:
                 return new InfiniteLoopAbyss(position);
-
+            case 9:
+                return new SegmentationFaultAbyss(position);
             default:
                 return null;
         }

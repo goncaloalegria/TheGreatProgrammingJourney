@@ -3,7 +3,7 @@ package pt.ulusofona.lp2.greatprogrammingjourney;
 public class SyntaxErrorAbyss extends Abyss {
 
     public static final int ID = 0;
-    private static final String NAME = "Erro de Sintaxe";
+    private static final String NAME = "Erro de sintaxe";
     private static final String IMAGE_NAME = "syntax.png";
 
     public SyntaxErrorAbyss(int position) {
