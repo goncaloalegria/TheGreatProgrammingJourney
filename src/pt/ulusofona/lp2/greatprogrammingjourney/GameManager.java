@@ -334,11 +334,19 @@ public class GameManager {
             elementType = "T:" + tool.getId();
         }
 
-        return new String[]{
-                programmersStr,
-                String.valueOf(elementId),
-                elementType
-        };
+        if(abyss != null){
+            return new String[]{
+                    programmersStr,
+                    abyss.getName(),
+                    "A:" + abyss.getId()
+            };
+        } else {
+            return new String[]{
+                    programmersStr,
+                    tool.getName(),
+                    "T:" + tool.getId()
+            };
+        }
     }
 
     public int getCurrentPlayerID() {
