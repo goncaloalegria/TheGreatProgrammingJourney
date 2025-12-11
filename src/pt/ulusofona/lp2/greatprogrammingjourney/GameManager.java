@@ -167,13 +167,13 @@ public class GameManager {
                 if (tipo == 0) {
                     Abyss abyss = createAbyss(abyssOrToolId, pos);
                     if (abyss == null) {
-                        continue;  // ID de abismo inválido
+                        continue;
                     }
                     addAbyss(abyss);
                 } else {
                     Tool tool = createTool(abyssOrToolId, pos);
                     if (tool == null) {
-                        continue;  // ID de ferramenta inválido
+                        continue;
                     }
                     addTool(tool);
                 }
@@ -279,6 +279,7 @@ public class GameManager {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < ordered.size(); i++) {
             Programmer p = ordered.get(i);
+
             sb.append(p.getName())
                     .append(" : ")
                     .append(p.getToolsInfo());
@@ -323,22 +324,22 @@ public class GameManager {
             return new String[]{programmersStr, "", ""};
         }
 
-        int elementId;
+        String elementName;
         String elementType;
 
         if (abyss != null) {
-            return new String[]{
-                    programmersStr,
-                    abyss.getName(),
-                    "A:" + abyss.getId()
-            };
+            elementName = abyss.getName();
+            elementType = "A:" + abyss.getId();
         } else {
-            return new String[]{
-                    programmersStr,
-                    tool.getName(),
-                    "T:" + tool.getId()
-            };
+            elementName = tool.getName();
+            elementType = "T:" + tool.getId();
         }
+
+        return new String[]{
+                programmersStr,
+                elementName,
+                elementType
+        };
     }
 
     public int getCurrentPlayerID() {
@@ -424,17 +425,6 @@ public class GameManager {
             return false;
         }
 
-        // Verificar restrições de movimento por linguagem
-        String firstLanguage = currentProgrammer.getFirstLanguage();
-        if (firstLanguage != null) {
-            if (firstLanguage.equalsIgnoreCase("Assembly") && nrPositions > 2) {
-                return false;  // Assembly só pode mover 1 ou 2
-            }
-            if (firstLanguage.equalsIgnoreCase("C") && nrPositions > 3) {
-                return false;  // C só pode mover até 3
-            }
-        }
-
         // Guardar info da jogada
         this.lastDiceValue = nrPositions;
         this.lastPlayerId = currentId;
@@ -454,6 +444,7 @@ public class GameManager {
 
         return true;
     }
+
     /**
      * Verifica se há vitória por eliminação (só um jogador ativo).
      * Jogadores presos ainda contam como ativos (não foram eliminados).
@@ -498,7 +489,7 @@ public class GameManager {
 
     /**
      * Processa a reação a abismos e ferramentas após o movimento.
-     * Ordem: 1) Recolher ferramenta, 2) Verificar colisão (Segmentation Fault), 3) Aplicar abismo
+     * Ordem: 1) Recolher ferramenta, 2) Aplicar abismo (com possível anulação)
      */
     public String reactToAbyssOrTool() {
         if (!pendingReaction || gameOver || lastPlayerId == null) {
@@ -529,13 +520,8 @@ public class GameManager {
                     .append("\".");
         }
 
-        // 2) Verificar Segmentation Fault (colisão de jogadores na mesma casa)
-        checkSegmentationFault(current, sb);
-
-        // 3) Aplicar Abismo, se houver (na nova posição após possível Segmentation Fault)
+        // 2) Aplicar Abismo, se houver
         boolean repeatTurn = applyAbyssIfAny(current, lastFromPosition, lastDiceValue, sb, playerName);
-
-
 
         // Atualizar número de turnos
         turnCount++;
@@ -553,49 +539,11 @@ public class GameManager {
 
         pendingReaction = false;
 
-        if (sb.isEmpty()) {
+        if (sb.length() == 0) {
             return null;
         }
 
         return sb.toString();
-    }
-
-
-    private void checkSegmentationFault(Programmer current, StringBuilder sb) {
-        if (current == null || current.isDefeated()) {
-            return;
-        }
-
-        int currentPos = current.getPosition();
-
-        // Contar OUTROS jogadores na mesma posição (excluindo o jogador atual)
-        List<Programmer> othersHere = new ArrayList<>();
-        for (Programmer p : programmers) {
-            if (p != current && p.getPosition() == currentPos && !p.isDefeated()) {
-                othersHere.add(p);
-            }
-        }
-
-        // Só há Segmentation Fault se o jogador atual se moveu para uma casa
-        // onde JÁ ESTAVA outro jogador
-        if (othersHere.isEmpty()) {
-            return;
-        }
-
-        // Adicionar o jogador atual à lista para todos recuarem
-        othersHere.add(current);
-
-        // Segmentation Fault! Todos recuam 3 casas
-        if (sb.length() > 0) {
-            sb.append(" ");
-        }
-        sb.append("Segmentation Fault!");
-
-        int retreat = 3;
-        for (Programmer p : othersHere) {
-            int newPos = Math.max(1, p.getPosition() - retreat);
-            p.setPosition(newPos);
-        }
     }
 
     /**
@@ -679,10 +627,94 @@ public class GameManager {
                 .append(abyss.getName())
                 .append("\".");
 
+        // Tratar Segmentation Fault especialmente
+        if (abyss.getId() == SegmentationFaultAbyss.ID) {
+            return applySegmentationFault(programmer, currentPos, sb);
+        }
+
         // Aplicar efeito normal do abismo
         abyss.applyEffect(programmer, diceValue, fromPosition);
 
         return abyss.forcesRepeatTurn();
+    }
+
+    /**
+     * Aplica o efeito do Segmentation Fault.
+     * Se 2+ jogadores na mesma casa, todos recuam 3 casas.
+     */
+    private boolean applySegmentationFault(Programmer triggerer, int position, StringBuilder sb) {
+        // Contar jogadores na mesma posição
+        List<Programmer> playersHere = new ArrayList<>();
+        for (Programmer p : programmers) {
+            if (p.getPosition() == position && !p.isDefeated()) {
+                playersHere.add(p);
+            }
+        }
+
+        if (playersHere.size() < 2) {
+            // Só 1 jogador - nada acontece
+            return false;
+        }
+
+        // 2+ jogadores - todos recuam 3 casas
+        int retreat = SegmentationFaultAbyss.RETREAT_POSITIONS;
+        for (Programmer p : playersHere) {
+            int newPos = Math.max(1, p.getPosition() - retreat);
+            p.setPosition(newPos);
+        }
+
+        // Verificar se caíram em novo abismo (pode causar cadeia)
+        for (Programmer p : playersHere) {
+            checkAbyssAfterRetreat(p);
+        }
+
+        return false;
+    }
+
+    /**
+     * Verifica e aplica abismo após recuo (para Segmentation Fault em cadeia).
+     */
+    private void checkAbyssAfterRetreat(Programmer programmer) {
+        if (programmer == null || programmer.isDefeated()) {
+            return;
+        }
+
+        int pos = programmer.getPosition();
+        Abyss abyss = abyssesByPosition.get(pos);
+
+        if (abyss == null) {
+            return;
+        }
+
+        // Se for Segmentation Fault, pode causar nova cadeia
+        if (abyss.getId() == SegmentationFaultAbyss.ID) {
+            List<Programmer> playersHere = new ArrayList<>();
+            for (Programmer p : programmers) {
+                if (p.getPosition() == pos && !p.isDefeated()) {
+                    playersHere.add(p);
+                }
+            }
+
+            if (playersHere.size() >= 2) {
+                int retreat = SegmentationFaultAbyss.RETREAT_POSITIONS;
+                for (Programmer p : playersHere) {
+                    int newPos = Math.max(1, p.getPosition() - retreat);
+                    p.setPosition(newPos);
+                }
+                // Verificar recursivamente
+                for (Programmer p : playersHere) {
+                    checkAbyssAfterRetreat(p);
+                }
+            }
+        } else {
+            // Aplicar efeito do abismo normalmente
+            Tool cancellingTool = programmer.findToolToCancelAbyss(abyss.getId());
+            if (cancellingTool != null) {
+                programmer.removeTool(cancellingTool);
+            } else {
+                abyss.applyEffect(programmer, 0, pos);
+            }
+        }
     }
 
     public boolean gameIsOver() {
@@ -810,8 +842,8 @@ public class GameManager {
                 return new BlueScreenOfDeathAbyss(position);
             case 8:
                 return new InfiniteLoopAbyss(position);
-            // case 9 (Segmentation Fault) não é um abismo de casa
-            // é uma regra global que se aplica quando 2+ jogadores estão na mesma casa
+            case 9:
+                return new SegmentationFaultAbyss(position);
             default:
                 return null;
         }
