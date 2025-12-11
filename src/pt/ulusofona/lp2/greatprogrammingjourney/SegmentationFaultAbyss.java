@@ -12,7 +12,7 @@ public class SegmentationFaultAbyss extends Abyss {
 
     public static final int ID = 9;
     private static final String NAME = "Segmentation Fault";
-    private static final String IMAGE_NAME = "segfault.png";
+    private static final String IMAGE_NAME = "";
     public static final int RETREAT_POSITIONS = 3;
 
     public SegmentationFaultAbyss(int position) {

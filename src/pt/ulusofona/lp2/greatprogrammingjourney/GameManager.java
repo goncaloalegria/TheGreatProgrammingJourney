@@ -25,6 +25,7 @@ public class GameManager {
     private boolean gameOver;
     private Integer winnerId;
     private int turnCount;
+    private Set<Integer> originalToolPositions;
 
     // Abysses e Tools por posição
     private HashMap<Integer, Abyss> abyssesByPosition;
@@ -52,6 +53,7 @@ public class GameManager {
         this.toolsByPosition = new HashMap<>();
         this.random = new Random();
         this.pendingReaction = false;
+        this.originalToolPositions = new HashSet<>();
     }
 
     // Parte 1: versão sem configuração de Abysses/Tools
@@ -116,9 +118,11 @@ public class GameManager {
         this.lastToPosition = 0;
         this.pendingReaction = false;
 
+
         // Processar AbyssesAndTools
         abyssesByPosition.clear();
         toolsByPosition.clear();
+        originalToolPositions.clear();
 
         // Casas já ocupadas (para evitar conflitos)
         HashSet<Integer> usedSlots = new HashSet<>();
@@ -176,6 +180,7 @@ public class GameManager {
                         continue;
                     }
                     addTool(tool);
+                    originalToolPositions.add(pos);
                 }
             }
         }
@@ -425,6 +430,25 @@ public class GameManager {
             return false;
         }
 
+        String firstLang = currentProgrammer.getFirstLanguage();
+        if (firstLang != null) {
+            // Assembly: só pode mover 1 ou 2 posições
+            if (firstLang.equalsIgnoreCase("Assembly") && nrPositions > 2) {
+                this.lastPlayerId = currentId;
+                this.pendingReaction = true;
+                return false;
+            }
+            // C: só pode mover até 3 posições
+            if (firstLang.equalsIgnoreCase("C") && nrPositions > 3) {
+                this.lastPlayerId = currentId;
+                this.pendingReaction = true;
+                return false;
+            }
+        }
+
+        // Guardar info da jogada
+        this.lastDiceValue = nrPositions;
+
         // Guardar info da jogada
         this.lastDiceValue = nrPositions;
         this.lastPlayerId = currentId;
@@ -540,7 +564,12 @@ public class GameManager {
         pendingReaction = false;
 
         if (sb.length() == 0) {
-            return null;
+            // Verificar se a casa originalmente tinha uma ferramenta (que já foi apanhada)
+            int currentPos = current.getPosition();
+            if (originalToolPositions.contains(currentPos)) {
+                return "";  // Casa tinha ferramenta mas já foi apanhada
+            }
+            return null;  // Casa sempre foi vazia
         }
 
         return sb.toString();
