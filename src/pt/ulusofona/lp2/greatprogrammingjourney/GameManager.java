@@ -488,7 +488,7 @@ public class GameManager {
 
     /**
      * Processa a reação a abismos e ferramentas após o movimento.
-     * Ordem: 1) Recolher ferramenta, 2) Aplicar abismo (com possível anulação)
+     * Ordem: 1) Recolher ferramenta, 2) Verificar colisão (Segmentation Fault), 3) Aplicar abismo
      */
     public String reactToAbyssOrTool() {
         if (!pendingReaction || gameOver || lastPlayerId == null) {
@@ -519,7 +519,10 @@ public class GameManager {
                     .append("\".");
         }
 
-        // 2) Aplicar Abismo, se houver
+        // 2) Verificar Segmentation Fault (colisão de jogadores na mesma casa)
+        checkSegmentationFault(current, sb);
+
+        // 3) Aplicar Abismo, se houver (na nova posição após possível Segmentation Fault)
         boolean repeatTurn = applyAbyssIfAny(current, lastFromPosition, lastDiceValue, sb, playerName);
 
         // Atualizar número de turnos
@@ -543,6 +546,48 @@ public class GameManager {
         }
 
         return sb.toString();
+    }
+
+    /**
+     * Verifica e aplica Segmentation Fault (regra global).
+     * Se 2+ jogadores estiverem na mesma casa, todos recuam 3 casas.
+     */
+    /**
+     * Verifica e aplica Segmentation Fault (regra global).
+     * Se 2+ jogadores estiverem na mesma casa, todos recuam 3 casas.
+     * Não há recursão - aplica-se apenas uma vez por turno.
+     */
+    private void checkSegmentationFault(Programmer current, StringBuilder sb) {
+        if (current == null || current.isDefeated()) {
+            return;
+        }
+
+        int currentPos = current.getPosition();
+
+        // Contar jogadores na mesma posição
+        List<Programmer> playersHere = new ArrayList<>();
+        for (Programmer p : programmers) {
+            if (p.getPosition() == currentPos && !p.isDefeated()) {
+                playersHere.add(p);
+            }
+        }
+
+        if (playersHere.size() < 2) {
+            // Só 1 jogador - nada acontece
+            return;
+        }
+
+        // 2+ jogadores - Segmentation Fault! Todos recuam 3 casas
+        if (sb.length() > 0) {
+            sb.append(" ");
+        }
+        sb.append("Segmentation Fault!");
+
+        int retreat = 3;
+        for (Programmer p : playersHere) {
+            int newPos = Math.max(1, p.getPosition() - retreat);
+            p.setPosition(newPos);
+        }
     }
 
     /**
@@ -626,94 +671,10 @@ public class GameManager {
                 .append(abyss.getName())
                 .append("\".");
 
-        // Tratar Segmentation Fault especialmente
-        if (abyss.getId() == SegmentationFaultAbyss.ID) {
-            return applySegmentationFault(programmer, currentPos, sb);
-        }
-
         // Aplicar efeito normal do abismo
         abyss.applyEffect(programmer, diceValue, fromPosition);
 
         return abyss.forcesRepeatTurn();
-    }
-
-    /**
-     * Aplica o efeito do Segmentation Fault.
-     * Se 2+ jogadores na mesma casa, todos recuam 3 casas.
-     */
-    private boolean applySegmentationFault(Programmer triggerer, int position, StringBuilder sb) {
-        // Contar jogadores na mesma posição
-        List<Programmer> playersHere = new ArrayList<>();
-        for (Programmer p : programmers) {
-            if (p.getPosition() == position && !p.isDefeated()) {
-                playersHere.add(p);
-            }
-        }
-
-        if (playersHere.size() < 2) {
-            // Só 1 jogador - nada acontece
-            return false;
-        }
-
-        // 2+ jogadores - todos recuam 3 casas
-        int retreat = SegmentationFaultAbyss.RETREAT_POSITIONS;
-        for (Programmer p : playersHere) {
-            int newPos = Math.max(1, p.getPosition() - retreat);
-            p.setPosition(newPos);
-        }
-
-        // Verificar se caíram em novo abismo (pode causar cadeia)
-        for (Programmer p : playersHere) {
-            checkAbyssAfterRetreat(p);
-        }
-
-        return false;
-    }
-
-    /**
-     * Verifica e aplica abismo após recuo (para Segmentation Fault em cadeia).
-     */
-    private void checkAbyssAfterRetreat(Programmer programmer) {
-        if (programmer == null || programmer.isDefeated()) {
-            return;
-        }
-
-        int pos = programmer.getPosition();
-        Abyss abyss = abyssesByPosition.get(pos);
-
-        if (abyss == null) {
-            return;
-        }
-
-        // Se for Segmentation Fault, pode causar nova cadeia
-        if (abyss.getId() == SegmentationFaultAbyss.ID) {
-            List<Programmer> playersHere = new ArrayList<>();
-            for (Programmer p : programmers) {
-                if (p.getPosition() == pos && !p.isDefeated()) {
-                    playersHere.add(p);
-                }
-            }
-
-            if (playersHere.size() >= 2) {
-                int retreat = SegmentationFaultAbyss.RETREAT_POSITIONS;
-                for (Programmer p : playersHere) {
-                    int newPos = Math.max(1, p.getPosition() - retreat);
-                    p.setPosition(newPos);
-                }
-                // Verificar recursivamente
-                for (Programmer p : playersHere) {
-                    checkAbyssAfterRetreat(p);
-                }
-            }
-        } else {
-            // Aplicar efeito do abismo normalmente
-            Tool cancellingTool = programmer.findToolToCancelAbyss(abyss.getId());
-            if (cancellingTool != null) {
-                programmer.removeTool(cancellingTool);
-            } else {
-                abyss.applyEffect(programmer, 0, pos);
-            }
-        }
     }
 
     public boolean gameIsOver() {
@@ -841,8 +802,7 @@ public class GameManager {
                 return new BlueScreenOfDeathAbyss(position);
             case 8:
                 return new InfiniteLoopAbyss(position);
-            case 9:
-                return new SegmentationFaultAbyss(position);
+
             default:
                 return null;
         }
