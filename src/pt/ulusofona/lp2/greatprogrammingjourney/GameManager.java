@@ -167,13 +167,13 @@ public class GameManager {
                 if (tipo == 0) {
                     Abyss abyss = createAbyss(abyssOrToolId, pos);
                     if (abyss == null) {
-                        continue;
+                        continue;  // ID de abismo inválido
                     }
                     addAbyss(abyss);
                 } else {
                     Tool tool = createTool(abyssOrToolId, pos);
                     if (tool == null) {
-                        continue;
+                        continue;  // ID de ferramenta inválido
                     }
                     addTool(tool);
                 }
@@ -327,18 +327,18 @@ public class GameManager {
         String elementType;
 
         if (abyss != null) {
-            elementId = abyss.getId();
-            elementType = "A:" + abyss.getId();
+            return new String[]{
+                    programmersStr,
+                    abyss.getName(),
+                    "A:" + abyss.getId()
+            };
         } else {
-            elementId = tool.getId();
-            elementType = "T:" + tool.getId();
+            return new String[]{
+                    programmersStr,
+                    tool.getName(),
+                    "T:" + tool.getId()
+            };
         }
-
-        return new String[]{
-                programmersStr,
-                String.valueOf(elementId),
-                elementType
-        };
     }
 
     public int getCurrentPlayerID() {
@@ -424,6 +424,17 @@ public class GameManager {
             return false;
         }
 
+        // Verificar restrições de movimento por linguagem
+        String firstLanguage = currentProgrammer.getFirstLanguage();
+        if (firstLanguage != null) {
+            if (firstLanguage.equalsIgnoreCase("Assembly") && nrPositions > 2) {
+                return false;  // Assembly só pode mover 1 ou 2
+            }
+            if (firstLanguage.equalsIgnoreCase("C") && nrPositions > 3) {
+                return false;  // C só pode mover até 3
+            }
+        }
+
         // Guardar info da jogada
         this.lastDiceValue = nrPositions;
         this.lastPlayerId = currentId;
@@ -443,7 +454,6 @@ public class GameManager {
 
         return true;
     }
-
     /**
      * Verifica se há vitória por eliminação (só um jogador ativo).
      * Jogadores presos ainda contam como ativos (não foram eliminados).
@@ -548,10 +558,7 @@ public class GameManager {
         return sb.toString();
     }
 
-    /**
-     * Verifica e aplica Segmentation Fault (regra global).
-     * Se 2+ jogadores estiverem na mesma casa, todos recuam 3 casas.
-     */
+
     private void checkSegmentationFault(Programmer current, StringBuilder sb) {
         if (current == null || current.isDefeated()) {
             return;
@@ -559,66 +566,33 @@ public class GameManager {
 
         int currentPos = current.getPosition();
 
-        // Contar jogadores na mesma posição
-        List<Programmer> playersHere = new ArrayList<>();
+        // Contar OUTROS jogadores na mesma posição (excluindo o jogador atual)
+        List<Programmer> othersHere = new ArrayList<>();
         for (Programmer p : programmers) {
-            if (p.getPosition() == currentPos && !p.isDefeated()) {
-                playersHere.add(p);
+            if (p != current && p.getPosition() == currentPos && !p.isDefeated()) {
+                othersHere.add(p);
             }
         }
 
-        if (playersHere.size() < 2) {
-            // Só 1 jogador - nada acontece
+        // Só há Segmentation Fault se o jogador atual se moveu para uma casa
+        // onde JÁ ESTAVA outro jogador
+        if (othersHere.isEmpty()) {
             return;
         }
 
-        // 2+ jogadores - Segmentation Fault! Todos recuam 3 casas
+        // Adicionar o jogador atual à lista para todos recuarem
+        othersHere.add(current);
+
+        // Segmentation Fault! Todos recuam 3 casas
         if (sb.length() > 0) {
             sb.append(" ");
         }
         sb.append("Segmentation Fault!");
 
         int retreat = 3;
-        for (Programmer p : playersHere) {
+        for (Programmer p : othersHere) {
             int newPos = Math.max(1, p.getPosition() - retreat);
             p.setPosition(newPos);
-        }
-
-        // Verificar recursivamente se caíram noutra casa com mais jogadores
-        for (Programmer p : playersHere) {
-            checkSegmentationFaultAfterRetreat(p);
-        }
-    }
-
-    /**
-     * Verifica Segmentation Fault em cadeia após recuo.
-     */
-    private void checkSegmentationFaultAfterRetreat(Programmer programmer) {
-        if (programmer == null || programmer.isDefeated()) {
-            return;
-        }
-
-        int pos = programmer.getPosition();
-
-        // Contar jogadores na mesma posição
-        List<Programmer> playersHere = new ArrayList<>();
-        for (Programmer p : programmers) {
-            if (p.getPosition() == pos && !p.isDefeated()) {
-                playersHere.add(p);
-            }
-        }
-
-        if (playersHere.size() >= 2) {
-            // Mais uma colisão! Todos recuam 3 casas
-            int retreat = 3;
-            for (Programmer p : playersHere) {
-                int newPos = Math.max(1, p.getPosition() - retreat);
-                p.setPosition(newPos);
-            }
-            // Verificar recursivamente
-            for (Programmer p : playersHere) {
-                checkSegmentationFaultAfterRetreat(p);
-            }
         }
     }
 
@@ -834,8 +808,8 @@ public class GameManager {
                 return new BlueScreenOfDeathAbyss(position);
             case 8:
                 return new InfiniteLoopAbyss(position);
-            case 9:
-                return new SegmentationFaultAbyss(position);
+            // case 9 (Segmentation Fault) não é um abismo de casa
+            // é uma regra global que se aplica quando 2+ jogadores estão na mesma casa
             default:
                 return null;
         }

@@ -57,6 +57,21 @@ public class Programmer {
         return state;
     }
 
+    /**
+     * Retorna a primeira linguagem do programador.
+     * As linguagens estão separadas por ";" no atributo languages.
+     */
+    public String getFirstLanguage() {
+        if (languages == null || languages.trim().isEmpty()) {
+            return null;
+        }
+        String[] parts = languages.split(";");
+        if (parts.length > 0) {
+            return parts[0].trim();
+        }
+        return null;
+    }
+
     // Setters básicos: usados por abismos, loadGame, etc.
     // NÃO mexem no histórico (porque não são movimentos "normais" do dado)
     public void setPosition(int position) {
