@@ -20,6 +20,10 @@ public class FileNotFoundExceptionAbyss extends Abyss{
         int currentPosition = programmer.getPosition();
         int newPosition = currentPosition - RETREAT_POSITIONS;
 
+        if (newPosition < 1) {
+            newPosition = 1;
+        }
+
         programmer.setPosition(newPosition);
     }
 
