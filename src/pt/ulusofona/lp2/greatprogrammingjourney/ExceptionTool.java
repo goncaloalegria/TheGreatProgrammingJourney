@@ -14,7 +14,7 @@ public class ExceptionTool extends Tool {
 
     public static final int ID = 3;
     private static final String NAME = "Tratamento de Excepções";
-    private static final String IMAGE_NAME = "exception.png";
+    private static final String IMAGE_NAME = "catch.png";
 
     // IDs dos abismos que esta ferramenta pode anular
     private static final Set<Integer> CANCELLABLE_ABYSSES =
