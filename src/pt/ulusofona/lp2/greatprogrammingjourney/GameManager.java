@@ -62,6 +62,7 @@ public class GameManager {
     }
 
     // Parte 2: versão completa com AbyssesAndTools
+    // Parte 2: versão completa com AbyssesAndTools
     public boolean createInitialBoard(String[][] playerInfo,
                                       int boardSize,
                                       String[][] abyssesAndTools) {
@@ -70,7 +71,7 @@ public class GameManager {
         }
 
         final int n = playerInfo.length;
-        if (n < MIN_PLAYERS || n > MAX_PLAYERS) {
+        if (n < 2 || n > 4) {
             return false;
         }
         if (boardSize < n * 2) {
@@ -109,6 +110,7 @@ public class GameManager {
         this.gameOver = false;
         this.winnerId = null;
         this.turnCount = 0;
+
         this.lastDiceValue = 0;
         this.lastPlayerId = null;
         this.lastAbyss = null;
@@ -117,7 +119,6 @@ public class GameManager {
         this.lastFromPosition = 0;
         this.lastToPosition = 0;
         this.pendingReaction = false;
-
 
         // Processar AbyssesAndTools
         abyssesByPosition.clear();
@@ -130,54 +131,42 @@ public class GameManager {
         usedSlots.add(boardSize);  // casa final também não
 
         if (abyssesAndTools != null) {
+            // Validação estrita do prof
+            if (!validateAbyssesAndTools(abyssesAndTools, boardSize)) {
+                return false;
+            }
+
+            // Reservar já todas as posições explícitas para que as linhas sem posição
+            // nunca as possam "roubar".
             for (String[] row : abyssesAndTools) {
-                if (row == null || row.length < 2) {
-                    continue;
+                if (row.length >= 3 && row[2] != null && !row[2].trim().isEmpty()) {
+                    usedSlots.add(Integer.parseInt(row[2]));
                 }
+            }
 
-                int tipo;
-                int abyssOrToolId;
-                int posFromConfig = -1;
+            for (String[] row : abyssesAndTools) {
+                int tipo = Integer.parseInt(row[0]);
+                int abyssOrToolId = Integer.parseInt(row[1]);
 
-                try {
-                    tipo = Integer.parseInt(row[0]);
-                    abyssOrToolId = Integer.parseInt(row[1]);
-
-                    if (row.length >= 3) {
-                        posFromConfig = Integer.parseInt(row[2]);
-                    }
-                } catch (NumberFormatException e) {
-                    continue;
-                }
-
-                if (tipo != 0 && tipo != 1) {
-                    continue;
-                }
-
-                // Tentar usar a posição do ficheiro se for válida e livre
                 int pos;
-                if (posFromConfig > 1 && posFromConfig < boardSize
-                        && !usedSlots.contains(posFromConfig)) {
-                    pos = posFromConfig;
-                    usedSlots.add(pos);
+                if (row.length >= 3 && row[2] != null && !row[2].trim().isEmpty()) {
+                    pos = Integer.parseInt(row[2]);
                 } else {
-                    try {
-                        pos = getRandomFreeSlot(usedSlots);
-                    } catch (IllegalStateException ex) {
-                        break;
-                    }
+                    pos = getFirstFreeSlot(usedSlots, boardSize);
                 }
+
+                usedSlots.add(pos);
 
                 if (tipo == 0) {
                     Abyss abyss = createAbyss(abyssOrToolId, pos);
                     if (abyss == null) {
-                        continue;
+                        return false;
                     }
                     addAbyss(abyss);
                 } else {
                     Tool tool = createTool(abyssOrToolId, pos);
                     if (tool == null) {
-                        continue;
+                        return false;
                     }
                     addTool(tool);
                     originalToolPositions.add(pos);
@@ -187,6 +176,61 @@ public class GameManager {
 
         return true;
     }
+
+    private int getFirstFreeSlot(Set<Integer> usedSlots, int boardSize) {
+        for (int pos = 2; pos < boardSize; pos++) {
+            if (!usedSlots.contains(pos)) {
+                return pos;
+            }
+        }
+        throw new IllegalStateException("Não há casas livres suficientes");
+    }
+
+    private boolean validateAbyssesAndTools(String[][] abyssesAndTools, int boardSize) {
+        HashSet<Integer> usedPositions = new HashSet<>();
+        usedPositions.add(1);
+        usedPositions.add(boardSize);
+
+        for (String[] row : abyssesAndTools) {
+            if (row == null || row.length < 2) {
+                return false;
+            }
+
+            int tipo;
+            int id;
+            Integer pos = null;
+
+            try {
+                tipo = Integer.parseInt(row[0]);
+                id = Integer.parseInt(row[1]);
+                if (row.length >= 3 && row[2] != null && !row[2].trim().isEmpty()) {
+                    pos = Integer.parseInt(row[2]);
+                }
+            } catch (NumberFormatException e) {
+                return false;
+            }
+
+            if (tipo != 0 && tipo != 1) {
+                return false;
+            }
+
+            // IDs válidos: abismos 0..9, ferramentas 0..5
+            if (tipo == 0) {
+                if (id < 0 || id > 9) return false;
+            } else {
+                if (id < 0 || id > 5) return false;
+            }
+
+            // Se vier posição, tem de ser válida e única
+            if (pos != null) {
+                if (pos <= 1 || pos >= boardSize) return false;
+                if (usedPositions.contains(pos)) return false;
+                usedPositions.add(pos);
+            }
+        }
+        return true;
+    }
+
 
     private boolean validatePlayerRow(String[] row,
                                       HashSet<Integer> seenIds,
@@ -432,24 +476,28 @@ public class GameManager {
 
         String firstLang = currentProgrammer.getFirstLanguage();
         if (firstLang != null) {
-            // Assembly: só pode mover 1 ou 2 posições
-            if (firstLang.equalsIgnoreCase("Assembly") && nrPositions > 2) {
+            boolean invalidMove =
+                    (firstLang.equalsIgnoreCase("Assembly") && nrPositions > 2) ||
+                            (firstLang.equalsIgnoreCase("C") && nrPositions > 3);
+
+            if (invalidMove) {
+                // Movimento inválido: não há reação (não andou),
+                // mas o turno conta e passa ao próximo
+                this.lastDiceValue = nrPositions;
                 this.lastPlayerId = currentId;
-                this.pendingReaction = true;
-                return false;
-            }
-            // C: só pode mover até 3 posições
-            if (firstLang.equalsIgnoreCase("C") && nrPositions > 3) {
-                this.lastPlayerId = currentId;
-                this.pendingReaction = true;
+                this.lastFromPosition = currentProgrammer.getPosition();
+                this.lastToPosition = currentProgrammer.getPosition();
+                this.lastAbyss = null;
+                this.lastToolUsed = null;
+                this.lastToolCollected = null;
+                this.pendingReaction = false;
+
+                turnCount++;
+                turnCursor = (turnCursor + 1) % turnOrderIds.size();
                 return false;
             }
         }
 
-        // Guardar info da jogada
-        this.lastDiceValue = nrPositions;
-
-        // Guardar info da jogada
         this.lastDiceValue = nrPositions;
         this.lastPlayerId = currentId;
         this.lastAbyss = null;
@@ -461,13 +509,12 @@ public class GameManager {
         this.lastFromPosition = from;
         this.lastToPosition = to;
 
-        // Registar movimento e mover jogador
         currentProgrammer.recordMove(to);
-
         this.pendingReaction = true;
 
         return true;
     }
+
 
     /**
      * Verifica se há vitória por eliminação (só um jogador ativo).
@@ -550,7 +597,7 @@ public class GameManager {
         // Atualizar número de turnos
         turnCount++;
 
-        // Verificar se o jogador chegou ao fim
+        // Verificar fim de jogo por chegar ao fim
         if (current.getPosition() == boardSize && current.isPlaying()) {
             gameOver = true;
             winnerId = current.getId();
@@ -564,16 +611,17 @@ public class GameManager {
         pendingReaction = false;
 
         if (sb.length() == 0) {
-            // Verificar se a casa originalmente tinha uma ferramenta (que já foi apanhada)
+            // Se a casa tinha ferramenta originalmente mas já foi apanhada, retorna ""
             int currentPos = current.getPosition();
             if (originalToolPositions.contains(currentPos)) {
-                return "";  // Casa tinha ferramenta mas já foi apanhada
+                return "";
             }
-            return null;  // Casa sempre foi vazia
+            return null;
         }
 
         return sb.toString();
     }
+
 
     /**
      * Recolhe uma ferramenta se existir na posição atual do jogador.
