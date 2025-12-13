@@ -31,7 +31,7 @@ public class GameManager {
     private HashMap<Integer, Abyss> abyssesByPosition;
     private HashMap<Integer, Tool> toolsByPosition;
 
-    // Para posições aleatórias (mantido, mas não usado no createInitialBoard novo)
+    // Random (mantido por compatibilidade)
     private Random random;
 
     // Info da última jogada (útil para a GUI)
@@ -40,8 +40,8 @@ public class GameManager {
     private int lastFromPosition = 0;
     private int lastToPosition = 0;
     private Abyss lastAbyss = null;
-    private Tool lastToolUsed = null;      // Ferramenta usada para anular abismo
-    private Tool lastToolCollected = null; // Ferramenta recolhida
+    private Tool lastToolUsed = null;       // Ferramenta usada para anular abismo
+    private Tool lastToolCollected = null;  // Ferramenta recolhida
 
     // Indica se há uma jogada pendente de reação
     private boolean pendingReaction = false;
@@ -56,12 +56,12 @@ public class GameManager {
         this.originalToolPositions = new HashSet<>();
     }
 
-    // Parte 1: versão sem configuração de Abysses/Tools
+    // Parte 1
     public boolean createInitialBoard(String[][] playerInfo, int boardSize) {
         return createInitialBoard(playerInfo, boardSize, null);
     }
 
-    // Parte 2: versão completa com AbyssesAndTools
+    // Parte 2
     public boolean createInitialBoard(String[][] playerInfo,
                                       int boardSize,
                                       String[][] abyssesAndTools) {
@@ -80,14 +80,12 @@ public class GameManager {
         HashSet<Integer> seenIds = new HashSet<>();
         HashSet<String> usedColors = new HashSet<>();
 
-        // Validar todos os jogadores antes de criar
         for (String[] row : playerInfo) {
             if (!validatePlayerRow(row, seenIds, usedColors)) {
                 return false;
             }
         }
 
-        // Criar objetos Programmer
         this.programmers.clear();
         this.idToProgrammer.clear();
 
@@ -124,40 +122,41 @@ public class GameManager {
         toolsByPosition.clear();
         originalToolPositions.clear();
 
-        // Casas já ocupadas (para evitar conflitos)
         HashSet<Integer> usedSlots = new HashSet<>();
-        usedSlots.add(1);          // casa inicial nunca tem Abyss/Tool
-        usedSlots.add(boardSize);  // casa final também não
+        usedSlots.add(1);
+        usedSlots.add(boardSize);
 
         if (abyssesAndTools != null) {
 
-            // Validação estrita: se estiver mal, falha o createInitialBoard
             if (!validateAbyssesAndTools(abyssesAndTools, boardSize)) {
                 return false;
             }
 
-            // Reservar já todas as posições fixas, para as linhas sem posição
-            // não "roubarem" essas casas.
+            // Colocação linha-a-linha (sem reservar posições futuras)
             for (String[] row : abyssesAndTools) {
-                Integer fixedPos = parseOptionalPosition(row);
-                if (fixedPos != null) {
-                    usedSlots.add(fixedPos);
+                int tipo;
+                int abyssOrToolId;
+
+                try {
+                    tipo = Integer.parseInt(row[0].trim());
+                    abyssOrToolId = Integer.parseInt(row[1].trim());
+                } catch (Exception e) {
+                    return false;
                 }
-            }
-
-            // Agora inserir na ordem dada
-            for (String[] row : abyssesAndTools) {
-                int tipo = Integer.parseInt(row[0].trim());
-                int abyssOrToolId = Integer.parseInt(row[1].trim());
 
                 Integer fixedPos = parseOptionalPosition(row);
-                int pos;
 
+                int pos;
                 if (fixedPos != null) {
+                    if (fixedPos <= 1 || fixedPos >= boardSize) {
+                        return false;
+                    }
+                    if (usedSlots.contains(fixedPos)) {
+                        return false;
+                    }
                     pos = fixedPos;
-                    // já está reservado em usedSlots, não é erro
+                    usedSlots.add(pos);
                 } else {
-                    // sem posição -> primeira livre (determinístico)
                     pos = getFirstFreeSlot(usedSlots);
                 }
 
@@ -167,13 +166,15 @@ public class GameManager {
                         return false;
                     }
                     addAbyss(abyss);
-                } else {
+                } else if (tipo == 1) {
                     Tool tool = createTool(abyssOrToolId, pos);
                     if (tool == null) {
                         return false;
                     }
                     addTool(tool);
                     originalToolPositions.add(pos);
+                } else {
+                    return false;
                 }
             }
         }
@@ -194,6 +195,7 @@ public class GameManager {
         } catch (NumberFormatException e) {
             return false;
         }
+
         if (id < 1 || seenIds.contains(id)) {
             return false;
         }
@@ -208,8 +210,7 @@ public class GameManager {
         }
 
         String color = row[3];
-        if (color == null || !VALID_COLORS.contains(color)
-                || usedColors.contains(color)) {
+        if (color == null || !VALID_COLORS.contains(color) || usedColors.contains(color)) {
             return false;
         }
         usedColors.add(color);
@@ -217,14 +218,12 @@ public class GameManager {
         return true;
     }
 
-    // -------- NOVO: validação estrita de AbyssesAndTools --------
-
     private boolean validateAbyssesAndTools(String[][] abyssesAndTools, int boardSize) {
         if (abyssesAndTools == null) {
             return true;
         }
 
-        Set<Integer> usedFixedPositions = new HashSet<>();
+        Set<Integer> fixedPositions = new HashSet<>();
         int fixedCount = 0;
         int noPosCount = 0;
 
@@ -235,6 +234,7 @@ public class GameManager {
 
             int tipo;
             int id;
+
             try {
                 tipo = Integer.parseInt(row[0].trim());
                 id = Integer.parseInt(row[1].trim());
@@ -246,42 +246,49 @@ public class GameManager {
                 return false;
             }
 
-            // IDs válidos
-            if (tipo == 0) { // Abyss 0..9
-                if (id < 0 || id > 9) return false;
-            } else { // Tool 0..5
-                if (id < 0 || id > 5) return false;
+            if (tipo == 0) {
+                if (id < 0 || id > 9) {
+                    return false;
+                }
+            } else {
+                if (id < 0 || id > 5) {
+                    return false;
+                }
             }
 
             Integer pos = parseOptionalPosition(row);
-
             if (pos == null) {
                 noPosCount++;
-                continue;
+            } else {
+                if (pos <= 1 || pos >= boardSize) {
+                    return false;
+                }
+                if (fixedPositions.contains(pos)) {
+                    return false;
+                }
+                fixedPositions.add(pos);
+                fixedCount++;
             }
-
-            // posição fixa: 2..boardSize-1
-            if (pos <= 1 || pos >= boardSize) {
-                return false;
-            }
-
-            // não pode haver 2 coisas na mesma casa
-            if (usedFixedPositions.contains(pos)) {
-                return false;
-            }
-
-            usedFixedPositions.add(pos);
-            fixedCount++;
         }
 
-        int totalFreeSlots = boardSize - 2;     // casas 2..boardSize-1
+        int totalFreeSlots = boardSize - 2; // casas 2..boardSize-1
         int freeAfterFixed = totalFreeSlots - fixedCount;
 
-        return noPosCount <= freeAfterFixed;
+        if (noPosCount > freeAfterFixed) {
+            return false;
+        }
+
+        return true;
     }
 
     private Integer parseOptionalPosition(String[] row) {
-        if (row.length < 3 || row[2] == null) {
+        if (row == null) {
+            return null;
+        }
+        if (row.length < 3) {
+            return null;
+        }
+        if (row[2] == null) {
             return null;
         }
         String s = row[2].trim();
@@ -301,16 +308,33 @@ public class GameManager {
         throw new IllegalStateException("Não há casas livres suficientes");
     }
 
-    // Mantido (pode ser útil noutros sítios), mas já não é usado no createInitialBoard corrigido
-    private int getRandomFreeSlot(Set<Integer> usedSlots) {
-        for (int tries = 0; tries < boardSize * 5; tries++) {
-            int pos = 2 + random.nextInt(Math.max(1, boardSize - 2));
-            if (!usedSlots.contains(pos)) {
-                usedSlots.add(pos);
-                return pos;
+    // parsing flexível da primeira linguagem: aceita ";" e ","
+    private String getFirstLanguageFlexible(Programmer programmer) {
+        if (programmer == null) {
+            return null;
+        }
+
+        String langs = programmer.getLanguages();
+        if (langs == null) {
+            return null;
+        }
+
+        String trimmed = langs.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+
+        String[] parts = trimmed.split("[;,]");
+        for (String p : parts) {
+            if (p != null) {
+                String t = p.trim();
+                if (!t.isEmpty()) {
+                    return t;
+                }
             }
         }
-        throw new IllegalStateException("Não há casas livres suficientes");
+
+        return null;
     }
 
     public String getImagePng(int position) {
@@ -366,6 +390,7 @@ public class GameManager {
             sb.append(p.getName())
                     .append(" : ")
                     .append(p.getToolsInfo());
+
             if (i < ordered.size() - 1) {
                 sb.append(" | ");
             }
@@ -418,11 +443,7 @@ public class GameManager {
             elementType = "T:" + tool.getId();
         }
 
-        return new String[]{
-                programmersStr,
-                elementName,
-                elementType
-        };
+        return new String[]{programmersStr, elementName, elementType};
     }
 
     public int getCurrentPlayerID() {
@@ -463,8 +484,7 @@ public class GameManager {
 
     /**
      * Move o jogador atual.
-     * Regra importante para os testes: se o jogador atual não pode jogar
-     * (Preso ou Derrotado), passa o turno e devolve false.
+     * Se o jogador atual não pode jogar (preso/derrotado), passa o turno e devolve false.
      */
     public boolean moveCurrentPlayer(int nrPositions) {
         if (gameOver) {
@@ -479,7 +499,6 @@ public class GameManager {
             return false;
         }
 
-        // Verificar vitória por eliminação no início do turno
         if (checkVictoryByElimination()) {
             return false;
         }
@@ -491,7 +510,6 @@ public class GameManager {
             return false;
         }
 
-        // Guardar info base da jogada (para GUI e testes)
         this.lastDiceValue = nrPositions;
         this.lastPlayerId = currentId;
         this.lastAbyss = null;
@@ -502,15 +520,14 @@ public class GameManager {
         this.lastToPosition = currentProgrammer.getPosition();
         this.pendingReaction = false;
 
-        // Se não pode jogar (Preso ou Derrotado), passa o turno
         if (!currentProgrammer.canPlay()) {
             turnCount++;
             turnCursor = (turnCursor + 1) % turnOrderIds.size();
             return false;
         }
 
-        // Restrições de linguagem (Assembly/C)
-        String firstLang = currentProgrammer.getFirstLanguage();
+        String firstLang = getFirstLanguageFlexible(currentProgrammer);
+
         if (firstLang != null) {
             if (firstLang.equalsIgnoreCase("Assembly") && nrPositions > 2) {
                 turnCount++;
@@ -524,7 +541,6 @@ public class GameManager {
             }
         }
 
-        // Movimento normal
         int from = currentProgrammer.getPosition();
         int to = calculateNewPosition(from, nrPositions);
 
@@ -532,15 +548,11 @@ public class GameManager {
         this.lastToPosition = to;
 
         currentProgrammer.recordMove(to);
-
         this.pendingReaction = true;
+
         return true;
     }
 
-    /**
-     * Verifica se há vitória por eliminação (só um jogador ativo).
-     * Jogadores presos ainda contam como ativos (não foram eliminados).
-     */
     private boolean checkVictoryByElimination() {
         int activeCount = 0;
         Integer lastActiveId = null;
@@ -571,7 +583,10 @@ public class GameManager {
 
         if (to > boardSize) {
             int overshoot = to - boardSize;
-            to = Math.max(1, boardSize - overshoot);
+            to = boardSize - overshoot;
+            if (to < 1) {
+                to = 1;
+            }
         }
 
         return to;
@@ -579,7 +594,6 @@ public class GameManager {
 
     /**
      * Processa a reação a abismos e ferramentas após o movimento.
-     * Ordem: 1) Recolher ferramenta, 2) Aplicar abismo (com possível anulação)
      */
     public String reactToAbyssOrTool() {
         if (!pendingReaction || gameOver || lastPlayerId == null) {
@@ -592,7 +606,6 @@ public class GameManager {
             return null;
         }
 
-        // Reset
         this.lastAbyss = null;
         this.lastToolUsed = null;
         this.lastToolCollected = null;
@@ -600,7 +613,6 @@ public class GameManager {
         StringBuilder sb = new StringBuilder();
         String playerName = current.getName();
 
-        // 1) Recolher ferramenta se houver na posição atual
         Tool collectedTool = collectToolIfAny(current);
         if (collectedTool != null) {
             this.lastToolCollected = collectedTool;
@@ -610,20 +622,18 @@ public class GameManager {
                     .append("\".");
         }
 
-        // 2) Aplicar Abismo, se houver
         boolean repeatTurn = applyAbyssIfAny(current, lastFromPosition, lastDiceValue, sb, playerName);
 
-        // Atualizar número de turnos
         turnCount++;
 
-        // Verificar se o jogador chegou ao fim
         if (current.getPosition() == boardSize && current.isPlaying()) {
             gameOver = true;
             winnerId = current.getId();
-        } else if (!repeatTurn) {
-            // Avançar para o próximo jogador
-            if (turnOrderIds != null && !turnOrderIds.isEmpty()) {
-                turnCursor = (turnCursor + 1) % turnOrderIds.size();
+        } else {
+            if (!repeatTurn) {
+                if (turnOrderIds != null && !turnOrderIds.isEmpty()) {
+                    turnCursor = (turnCursor + 1) % turnOrderIds.size();
+                }
             }
         }
 
@@ -678,7 +688,6 @@ public class GameManager {
         this.lastAbyss = abyss;
 
         Tool cancellingTool = programmer.findToolToCancelAbyss(abyss.getId());
-
         if (cancellingTool != null) {
             this.lastToolUsed = cancellingTool;
             programmer.removeTool(cancellingTool);
@@ -709,14 +718,26 @@ public class GameManager {
         }
 
         abyss.applyEffect(programmer, diceValue, fromPosition);
-
         return abyss.forcesRepeatTurn();
     }
 
+    /**
+     * Segmentation Fault:
+     * Só ativa se a casa tiver o abismo e houver 2+ jogadores na mesma casa.
+     * Todos recuam 3 casas.
+     */
     private boolean applySegmentationFault(Programmer triggerer, int position, StringBuilder sb) {
-        List<Programmer> playersHere = new ArrayList<>();
+        Abyss abyss = abyssesByPosition.get(position);
+        if (abyss == null) {
+            return false;
+        }
+        if (abyss.getId() != SegmentationFaultAbyss.ID) {
+            return false;
+        }
+
+        ArrayList<Programmer> playersHere = new ArrayList<>();
         for (Programmer p : programmers) {
-            if (p.getPosition() == position && !p.isDefeated()) {
+            if (!p.isDefeated() && p.getPosition() == position) {
                 playersHere.add(p);
             }
         }
@@ -726,8 +747,12 @@ public class GameManager {
         }
 
         int retreat = SegmentationFaultAbyss.RETREAT_POSITIONS;
+
         for (Programmer p : playersHere) {
-            int newPos = Math.max(1, p.getPosition() - retreat);
+            int newPos = p.getPosition() - retreat;
+            if (newPos < 1) {
+                newPos = 1;
+            }
             p.setPosition(newPos);
         }
 
@@ -739,7 +764,10 @@ public class GameManager {
     }
 
     private void checkAbyssAfterRetreat(Programmer programmer) {
-        if (programmer == null || programmer.isDefeated()) {
+        if (programmer == null) {
+            return;
+        }
+        if (programmer.isDefeated()) {
             return;
         }
 
@@ -751,31 +779,17 @@ public class GameManager {
         }
 
         if (abyss.getId() == SegmentationFaultAbyss.ID) {
-            List<Programmer> playersHere = new ArrayList<>();
-            for (Programmer p : programmers) {
-                if (p.getPosition() == pos && !p.isDefeated()) {
-                    playersHere.add(p);
-                }
-            }
-
-            if (playersHere.size() >= 2) {
-                int retreat = SegmentationFaultAbyss.RETREAT_POSITIONS;
-                for (Programmer p : playersHere) {
-                    int newPos = Math.max(1, p.getPosition() - retreat);
-                    p.setPosition(newPos);
-                }
-                for (Programmer p : playersHere) {
-                    checkAbyssAfterRetreat(p);
-                }
-            }
-        } else {
-            Tool cancellingTool = programmer.findToolToCancelAbyss(abyss.getId());
-            if (cancellingTool != null) {
-                programmer.removeTool(cancellingTool);
-            } else {
-                abyss.applyEffect(programmer, 0, pos);
-            }
+            applySegmentationFault(programmer, pos, new StringBuilder());
+            return;
         }
+
+        Tool cancellingTool = programmer.findToolToCancelAbyss(abyss.getId());
+        if (cancellingTool != null) {
+            programmer.removeTool(cancellingTool);
+            return;
+        }
+
+        abyss.applyEffect(programmer, 0, pos);
     }
 
     public boolean gameIsOver() {
@@ -880,49 +894,69 @@ public class GameManager {
         toolsByPosition.put(tool.getPosition(), tool);
     }
 
+    // Fábrica de Abyss
     private Abyss createAbyss(int abyssId, int position) {
         switch (abyssId) {
-            case 0:
+            case 0: {
                 return new SyntaxErrorAbyss(position);
-            case 1:
+            }
+            case 1: {
                 return new LogicErrorAbyss(position);
-            case 2:
+            }
+            case 2: {
                 return new ExceptionAbyss(position);
-            case 3:
+            }
+            case 3: {
                 return new FileNotFoundExceptionAbyss(position);
-            case 4:
+            }
+            case 4: {
                 return new CrashAbyss(position);
-            case 5:
+            }
+            case 5: {
                 return new DuplicatedCodeAbyss(position);
-            case 6:
+            }
+            case 6: {
                 return new SecondaryEffects(position);
-            case 7:
+            }
+            case 7: {
                 return new BlueScreenOfDeathAbyss(position);
-            case 8:
+            }
+            case 8: {
                 return new InfiniteLoopAbyss(position);
-            case 9:
+            }
+            case 9: {
                 return new SegmentationFaultAbyss(position);
-            default:
+            }
+            default: {
                 return null;
+            }
         }
     }
 
+    // Fábrica de Tools
     private Tool createTool(int toolId, int position) {
         switch (toolId) {
-            case 0:
+            case 0: {
                 return new InheritanceTool(position);
-            case 1:
+            }
+            case 1: {
                 return new FunctionalProgrammingTool(position);
-            case 2:
+            }
+            case 2: {
                 return new UnitTestTool(position);
-            case 3:
+            }
+            case 3: {
                 return new ExceptionTool(position);
-            case 4:
+            }
+            case 4: {
                 return new IdeTool(position);
-            case 5:
+            }
+            case 5: {
                 return new AjudaProfessorTool(position);
-            default:
+            }
+            default: {
                 return null;
+            }
         }
     }
 
@@ -1042,6 +1076,7 @@ public class GameManager {
             if (!scanner.hasNextLine()) {
                 throw new InvalidFileException("Dados de programadores incompletos");
             }
+
             String line = scanner.nextLine();
             String[] parts = line.split("\\|", -1);
             if (parts.length < 6) {
@@ -1087,6 +1122,7 @@ public class GameManager {
             if (!scanner.hasNextLine()) {
                 throw new InvalidFileException("Dados de abismos incompletos");
             }
+
             String line = scanner.nextLine();
             String[] parts = line.split("\\|", -1);
             if (parts.length < 2) {
@@ -1115,6 +1151,7 @@ public class GameManager {
             if (!scanner.hasNextLine()) {
                 throw new InvalidFileException("Dados de ferramentas incompletos");
             }
+
             String line = scanner.nextLine();
             String[] parts = line.split("\\|", -1);
             if (parts.length < 2) {
