@@ -215,7 +215,9 @@ public class GameManager {
                 if (id < 0 || id > 9) {
                     return false;
                 }
-            } else {
+            }
+
+            if (tipo == 1) {
                 if (id < 0 || id > 5) {
                     return false;
                 }
@@ -437,6 +439,10 @@ public class GameManager {
      * Regras:
      * - moveCurrentPlayer não aplica abismos/tools, só move (ou prepara reação)
      * - o turno avança em reactToAbyssOrTool()
+     *
+     * ALTERAÇÃO (BOUNCEBACK):
+     * - Se ultrapassar a meta (to > boardSize) => movimento inválido:
+     *   não move, não avança turno, não cria pendingReaction, não atualiza last*.
      */
     public boolean moveCurrentPlayer(int nrPositions) {
         if (gameOver) {
@@ -534,15 +540,22 @@ public class GameManager {
             }
         }
 
-        // Movimento normal
+        // --- BOUNCEBACK REMOVIDO ---
+        // Se ultrapassar a meta => movimento inválido (não move, não avança turno, não há reação)
+        int from = current.getPosition();
+        int intendedTo = from + nrPositions;
+        if (intendedTo > boardSize) {
+            return false;
+        }
+
+        // Movimento válido
         this.lastDiceValue = nrPositions;
         this.lastPlayerId = currentId;
         this.lastAbyss = null;
         this.lastToolUsed = null;
         this.lastToolCollected = null;
 
-        int from = current.getPosition();
-        int to = calculateNewPosition(from, nrPositions);
+        int to = intendedTo;
 
         this.lastFromPosition = from;
         this.lastToPosition = to;
@@ -556,15 +569,9 @@ public class GameManager {
         return true;
     }
 
+    // Mantido por compatibilidade, mas já não é usado no movimento (bounceback foi removido)
     private int calculateNewPosition(int from, int nrPositions) {
-        int to = from + nrPositions;
-
-        if (to > boardSize) {
-            int overshoot = to - boardSize;
-            to = Math.max(1, boardSize - overshoot);
-        }
-
-        return to;
+        return from + nrPositions;
     }
 
     /**
@@ -679,7 +686,6 @@ public class GameManager {
                     abyssActivated = true;
                     abyss.applyEffect(current, lastDiceValue, lastFromPosition);
 
-                    // Mensagem do abismo (como no teu padrão anterior)
                     abyssMsg = abyss.getName() + "!";
                 }
             }
