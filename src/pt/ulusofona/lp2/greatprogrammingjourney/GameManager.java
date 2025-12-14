@@ -434,6 +434,9 @@ public class GameManager {
 
         // Se está preso: não joga, mas o avanço do turno acontece em react
         if (current.isTrapped()) {
+            // Liberta o jogador quando ele perde a vez
+            current.setState("Em Jogo");
+
             setLastMoveNoChange(currentId, current.getPosition(), nrPositions);
             this.pendingReaction = true;
             this.pendingReason = PENDING_REASON_TRAPPED;
@@ -573,7 +576,8 @@ public class GameManager {
 
     private String handleTrappedPlayer(Programmer current) {
         clearPendingState();
-        current.setState("Em Jogo");
+        // Jogador continua Preso após perder a vez
+        // Será libertado apenas quando tiver a ferramenta "Ajuda do Professor"
         turnCount++;
         advanceTurnCursor();
         return "Ciclo Infinito!";
@@ -614,7 +618,25 @@ public class GameManager {
             return handleSegmentationFault(pos, abyss);
         }
 
+        if (abyss.getId() == InfiniteLoopAbyss.ID) {
+            return handleInfiniteLoop(current, abyss);
+        }
+
         return handleRegularAbyss(current, abyss);
+    }
+
+    private String handleInfiniteLoop(Programmer current, Abyss abyss) {
+        Tool canceller = current.findToolToCancelAbyss(abyss.getId());
+
+        if (canceller != null) {
+            current.removeTool(canceller);
+            this.lastToolUsed = canceller;
+            return abyss.getName() + " anulado por " + canceller.getName();
+        }
+
+        // Aplica o efeito (jogador fica Preso)
+        abyss.applyEffect(current, lastDiceValue, lastFromPosition);
+        return abyss.getName() + "!";
     }
 
     private String handleSegmentationFault(int pos, Abyss abyss) {

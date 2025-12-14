@@ -8,6 +8,7 @@ import java.util.Set;
  * Ferramenta Tratamento de Excepções (ID 3)
  * Anula os abismos que causam interrupções inesperadas ou falhas críticas:
  * - Abismo 2 (Exception)
+ * - Abismo 3 (FileNotFoundException)
  * - Abismo 7 (Blue Screen of Death)
  */
 public class ExceptionTool extends Tool {
@@ -18,7 +19,7 @@ public class ExceptionTool extends Tool {
 
     // IDs dos abismos que esta ferramenta pode anular
     private static final Set<Integer> CANCELLABLE_ABYSSES =
-            new HashSet<>(Arrays.asList(2, 7));
+            new HashSet<>(Arrays.asList(2, 3, 7));
 
     public ExceptionTool(int position) {
         super(ID, NAME, position);

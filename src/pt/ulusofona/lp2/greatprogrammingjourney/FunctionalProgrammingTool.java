@@ -9,6 +9,7 @@ import java.util.Set;
  * Anula os abismos relacionados a mudanças de estado ou lógica complexa:
  * - Abismo 1 (Erro de Lógica)
  * - Abismo 2 (Exception)
+ * - Abismo 6 (Efeitos Secundários)
  */
 public class FunctionalProgrammingTool extends Tool {
 
@@ -18,7 +19,7 @@ public class FunctionalProgrammingTool extends Tool {
 
     // IDs dos abismos que esta ferramenta pode anular
     private static final Set<Integer> CANCELLABLE_ABYSSES =
-            new HashSet<>(Arrays.asList(1, 2));
+            new HashSet<>(Arrays.asList(1, 2, 6));
 
     public FunctionalProgrammingTool(int position) {
         super(ID, NAME, position);
