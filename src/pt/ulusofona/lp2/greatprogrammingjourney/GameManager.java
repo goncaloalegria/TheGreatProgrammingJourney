@@ -597,7 +597,6 @@ public class GameManager {
             return null;
         }
 
-        // Caso especial: preso
         if (pendingReason == PENDING_REASON_TRAPPED) {
             String msg = pendingMessage;
 
@@ -605,14 +604,12 @@ public class GameManager {
             pendingReason = PENDING_REASON_NONE;
             pendingMessage = null;
 
-            // Incrementa turno e avança jogador (não repete)
             turnCount++;
             advanceTurnCursor();
 
             return msg;
         }
 
-        // Caso especial: movimento inválido (consome turno, mas sem evento do tabuleiro)
         if (pendingReason == PENDING_REASON_INVALID_MOVE) {
             pendingReaction = false;
             pendingReason = PENDING_REASON_NONE;
@@ -624,7 +621,6 @@ public class GameManager {
             return null;
         }
 
-        // Caso especial: derrotado
         if (pendingReason == PENDING_REASON_DEFEATED) {
             pendingReaction = false;
             pendingReason = PENDING_REASON_NONE;
@@ -636,7 +632,6 @@ public class GameManager {
             return null;
         }
 
-        // Reset last-info
         this.lastAbyss = null;
         this.lastToolUsed = null;
         this.lastToolCollected = null;
@@ -645,7 +640,6 @@ public class GameManager {
 
         String toolMsg = null;
 
-        // 1) Tool (fica na casa; se já tiver, devolve mensagem própria)
         Tool boardTool = toolsByPosition.get(pos);
         if (boardTool != null) {
             if (!current.hasToolOfType(boardTool.getId())) {
@@ -657,7 +651,6 @@ public class GameManager {
             }
         }
 
-        // 2) Abyss
         Abyss abyss = abyssesByPosition.get(pos);
         boolean abyssActivated = false;
         String abyssMsg = null;
@@ -691,22 +684,18 @@ public class GameManager {
             }
         }
 
-        // Verificar vitória por chegada ao fim
         if (current.getPosition() == boardSize && current.isPlaying()) {
             gameOver = true;
             winnerId = current.getId();
         }
 
-        // Repetir turno?
         boolean repeatTurn = false;
         if (abyss != null && abyssActivated && lastToolUsed == null) {
             repeatTurn = abyss.forcesRepeatTurn();
         }
 
-        // Incrementa turno sempre que react é chamado (regra)
         turnCount++;
 
-        // Avança turno se não repetir e não acabou
         if (!gameOver && !repeatTurn) {
             advanceTurnCursor();
         }
@@ -715,7 +704,6 @@ public class GameManager {
         pendingReason = PENDING_REASON_NONE;
         pendingMessage = null;
 
-        // Retorno: prioridade ao abismo (se ativou), senão tool msg, senão null
         if (abyssActivated && abyssMsg != null) {
             return abyssMsg;
         }
