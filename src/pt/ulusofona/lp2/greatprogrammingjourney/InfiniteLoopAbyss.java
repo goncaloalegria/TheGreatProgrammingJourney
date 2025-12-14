@@ -14,6 +14,7 @@ public class InfiniteLoopAbyss extends Abyss {
     private static final String IMAGE_NAME = "infinite-loop.png";
 
     public InfiniteLoopAbyss(int position) {
+
         super(ID, NAME, position);
     }
 

@@ -48,10 +48,12 @@ public class GameManager {
     // Se o turno do jogador atual foi “consumido” e está à espera de reação
     private boolean pendingReaction = false;
 
-    // Para situações em que moveCurrentPlayer devolve false mas o turno tem de avançar via react
+    // Razões para moveCurrentPlayer devolver false mas o turno avançar via react
     private int pendingReason = 0;
     private static final int PENDING_REASON_NONE = 0;
+    private static final int PENDING_REASON_TRAPPED = 1;
     private static final int PENDING_REASON_INVALID_MOVE = 2;
+    private static final int PENDING_REASON_DEFEATED = 3;
 
     public GameManager() {
         this.programmers = new ArrayList<>();
@@ -177,14 +179,6 @@ public class GameManager {
         return true;
     }
 
-    /**
-     * Valida IDs e posições.
-     * - tipo 0 (abismo) id 0..9
-     * - tipo 1 (tool) id 0..5
-     * - linhas com < 3 colunas (sem posição) DEVEM SER IGNORADAS
-     * - posição: 2..boardSize-1
-     * - NÃO pode haver 2 itens na mesma casa (nem tool+abyss)
-     */
     private boolean validateAbyssesAndToolsConfig(String[][] cfg, int boardSize) {
         HashSet<Integer> occupiedSlots = new HashSet<>();
 
@@ -192,7 +186,6 @@ public class GameManager {
             if (row == null) {
                 continue;
             }
-
             if (row.length < 3) {
                 continue;
             }
@@ -381,12 +374,18 @@ public class GameManager {
 
     public String getCurrentPlayerName() {
         Programmer p = idToProgrammer.get(getCurrentPlayerID());
-        return (p == null) ? "" : p.getName();
+        if (p == null) {
+            return "";
+        }
+        return p.getName();
     }
 
     public String[] getCurrentPlayerInfo() {
         Programmer p = idToProgrammer.get(getCurrentPlayerID());
-        return (p == null) ? null : p.getInfoAsArray();
+        if (p == null) {
+            return null;
+        }
+        return p.getInfoAsArray();
     }
 
     public int getLastDiceValue() {
@@ -402,16 +401,12 @@ public class GameManager {
 
     /**
      * moveCurrentPlayer:
-     * - nrPositions 1..6
-     * - SKIP automático de quem não pode jogar (Preso / Derrotado)
-     * - BOUNCE-BACK ao ultrapassar a meta (reflete para trás)
+     * - NÃO avança turnCursor (isso é no react)
+     * - Se o jogador estiver Preso/Derrotado: devolve false e deixa pendingReason
+     * - Bounce-back ao ultrapassar a meta
      * - Restrições por linguagem:
      *   Assembly: max 2
      *   C: max 3  (C# NÃO conta como C)
-     *
-     * Regras:
-     * - moveCurrentPlayer não aplica abismos/tools, só move (ou prepara reação)
-     * - o turno avança em reactToAbyssOrTool()
      */
     public boolean moveCurrentPlayer(int nrPositions) {
         if (gameOver) {
@@ -428,14 +423,25 @@ public class GameManager {
         this.pendingReaction = false;
         this.pendingReason = PENDING_REASON_NONE;
 
-        // Encontrar próximo jogador que pode jogar (salta Presos/Derrotados)
-        if (!selectNextPlayablePlayer()) {
-            return false;
-        }
-
         int currentId = getCurrentPlayerID();
         Programmer current = idToProgrammer.get(currentId);
         if (current == null) {
+            return false;
+        }
+
+        // Se está derrotado mas ainda aparece (segurança)
+        if (current.isDefeated()) {
+            setLastMoveNoChange(currentId, current.getPosition(), nrPositions);
+            this.pendingReaction = true;
+            this.pendingReason = PENDING_REASON_DEFEATED;
+            return false;
+        }
+
+        // Se está preso: não joga, mas o avanço do turno acontece em react
+        if (current.isTrapped()) {
+            setLastMoveNoChange(currentId, current.getPosition(), nrPositions);
+            this.pendingReaction = true;
+            this.pendingReason = PENDING_REASON_TRAPPED;
             return false;
         }
 
@@ -443,7 +449,6 @@ public class GameManager {
         String firstLang = current.getFirstLanguage();
         if (firstLang != null) {
             if (firstLang.equalsIgnoreCase("Assembly") && nrPositions > 2) {
-                // inválido mas consome o turno
                 setLastMoveNoChange(currentId, current.getPosition(), nrPositions);
                 this.pendingReaction = true;
                 this.pendingReason = PENDING_REASON_INVALID_MOVE;
@@ -489,37 +494,6 @@ public class GameManager {
         this.lastToolCollected = null;
     }
 
-    private boolean selectNextPlayablePlayer() {
-        if (turnOrderIds == null || turnOrderIds.isEmpty()) {
-            return false;
-        }
-
-        int safety = 0;
-        while (safety < turnOrderIds.size()) {
-            int id = turnOrderIds.get(turnCursor);
-            Programmer p = idToProgrammer.get(id);
-
-            // se não existir (não devia), salta
-            if (p == null) {
-                turnCursor = (turnCursor + 1) % turnOrderIds.size();
-                safety++;
-                continue;
-            }
-
-            // se pode jogar, para aqui
-            if (p.canPlay()) {
-                return true;
-            }
-
-            // se não pode jogar (Preso/Derrotado), salta
-            turnCursor = (turnCursor + 1) % turnOrderIds.size();
-            safety++;
-        }
-
-        // ninguém pode jogar
-        return false;
-    }
-
     // Bounce-back: se passar da meta, reflete para trás
     private int calculateNewPosition(int from, int nrPositions) {
         int to = from + nrPositions;
@@ -535,16 +509,6 @@ public class GameManager {
         return to;
     }
 
-    /**
-     * reactToAbyssOrTool:
-     * - se não houver nada para reagir, devolve null
-     * - ordem: ferramenta primeiro, depois abismo
-     *
-     * Regras importantes:
-     * - Ferramenta: ao apanhar, SAI do tabuleiro
-     * - Segmentation Fault só ativa com 2+ jogadores vivos na casa do abismo
-     * - BSOD derrota só quem caiu lá e é removido da rotação
-     */
     public String reactToAbyssOrTool() {
         if (!pendingReaction || gameOver || lastPlayerId == null) {
             return null;
@@ -557,7 +521,29 @@ public class GameManager {
             return null;
         }
 
-        // Caso: movimento inválido por linguagem (consome turno, avança)
+        // Jogador preso: perde a vez, mas mantém-se no sistema. O turno avança aqui.
+        if (pendingReason == PENDING_REASON_TRAPPED) {
+            pendingReaction = false;
+            pendingReason = PENDING_REASON_NONE;
+
+            turnCount++;
+            advanceTurnCursorToNextPlayable();
+
+            return "Ciclo Infinito!";
+        }
+
+        // Jogador derrotado (segurança): só avança
+        if (pendingReason == PENDING_REASON_DEFEATED) {
+            pendingReaction = false;
+            pendingReason = PENDING_REASON_NONE;
+
+            turnCount++;
+            advanceTurnCursorToNextPlayable();
+
+            return null;
+        }
+
+        // Movimento inválido por linguagem: consome turno, avança
         if (pendingReason == PENDING_REASON_INVALID_MOVE) {
             pendingReaction = false;
             pendingReason = PENDING_REASON_NONE;
@@ -586,12 +572,10 @@ public class GameManager {
                 current.addTool(boardTool);
                 this.lastToolCollected = boardTool;
 
-                // remove do tabuleiro
                 toolsByPosition.remove(pos);
 
                 toolMsg = "Recolheu ferramenta: " + boardTool.getName();
             } else {
-                // se já tem, NÃO remove do tabuleiro (outros podem apanhar)
                 toolMsg = "Já possui a ferramenta: " + boardTool.getName();
             }
         }
@@ -601,10 +585,11 @@ public class GameManager {
         boolean abyssActivated = false;
         String abyssMsg = null;
 
+        boolean removedCurrentFromTurnOrder = false;
+
         if (abyss != null) {
             this.lastAbyss = abyss;
 
-            // Segmentation Fault: só ativa com 2+
             if (abyss.getId() == SegmentationFaultAbyss.ID) {
                 List<Programmer> here = getAlivePlayersAt(pos);
                 if (here.size() >= 2) {
@@ -613,7 +598,6 @@ public class GameManager {
                     abyssMsg = abyss.getName() + "!";
                 }
             } else {
-                // cancela com tool correta (mapeamento fixo)
                 Tool canceller = findToolToCancelAbyss(current, abyss.getId());
                 if (canceller != null) {
                     current.removeTool(canceller);
@@ -626,39 +610,33 @@ public class GameManager {
                     abyssMsg = abyss.getName() + "!";
                 }
 
-                // Se ficou derrotado (ex.: BSOD), remove da ordem
                 if (current.isDefeated()) {
+                    removedCurrentFromTurnOrder = true;
                     removePlayerFromTurnOrder(current.getId());
                 }
             }
         }
 
-        // Verificar vitória por chegada ao fim
         if (current.getPosition() == boardSize && current.isPlaying()) {
             gameOver = true;
             winnerId = current.getId();
         }
 
-        // Repetir turno?
         boolean repeatTurn = false;
         if (abyss != null && abyssActivated && lastToolUsed == null) {
             repeatTurn = abyss.forcesRepeatTurn();
         }
 
-        // Incrementa turno sempre que react é chamado
         turnCount++;
 
         if (!gameOver) {
-            if (!repeatTurn) {
-                // se o jogador foi removido, o cursor já está no “próximo”
-                advanceTurnCursorToNextPlayable();
+            // Se o jogador foi removido, NÃO podes “avançar outra vez”
+            if (removedCurrentFromTurnOrder) {
+                advanceTurnCursorToNextPlayableIfCurrentCantPlay();
             } else {
-                // repete turno: garantir que cursor aponta para alguém que pode jogar
-                // (se o atual foi removido por derrota, não faz sentido repetir)
-                if (turnOrderIds == null || turnOrderIds.isEmpty()) {
-                    gameOver = true;
+                if (!repeatTurn) {
+                    advanceTurnCursorToNextPlayable();
                 } else {
-                    // se o atual saiu, cursor já aponta para outro, então não insistimos em repetir
                     advanceTurnCursorToNextPlayableIfCurrentCantPlay();
                 }
             }
@@ -667,7 +645,6 @@ public class GameManager {
         pendingReaction = false;
         pendingReason = PENDING_REASON_NONE;
 
-        // Retorno: prioridade ao abismo (se ativou), senão tool msg
         if (abyssActivated && abyssMsg != null) {
             return abyssMsg;
         }
@@ -676,7 +653,6 @@ public class GameManager {
             return toolMsg;
         }
 
-        // Se era casa de tool mas já foi apanhada => devolver string vazia (não null)
         if (abyss == null && boardTool == null && toolExistedHereOriginally) {
             return "";
         }
@@ -689,14 +665,15 @@ public class GameManager {
             return;
         }
 
-        // Se o atual não pode jogar, avança até alguém poder
         int safety = 0;
         while (safety < turnOrderIds.size()) {
             int id = turnOrderIds.get(turnCursor);
             Programmer p = idToProgrammer.get(id);
+
             if (p != null && p.canPlay()) {
                 return;
             }
+
             turnCursor = (turnCursor + 1) % turnOrderIds.size();
             safety++;
         }
@@ -730,8 +707,7 @@ public class GameManager {
             return;
         }
 
-        // Ajuste do cursor:
-        // se removemos alguém antes do cursor, cursor recua 1
+        // Se removemos alguém ANTES do cursor, cursor recua 1
         if (idx < turnCursor) {
             turnCursor--;
         }
@@ -744,19 +720,6 @@ public class GameManager {
         }
     }
 
-    /**
-     * Mapeamento “oficial” (pela tua regra):
-     * 0 SyntaxError        -> IDE (4)
-     * 1 LogicError         -> IDE (4)
-     * 2 Exception          -> Tratamento de Excepções (3)
-     * 3 FileNotFound       -> Tratamento de Excepções (3)   <-- corrige o teu FullGame
-     * 4 Crash              -> Ajuda do Professor (5)
-     * 5 DuplicatedCode     -> Herança (0)
-     * 6 SideEffects        -> Programação Funcional (1)
-     * 7 BSOD               -> IDE (4)
-     * 8 Ciclo Infinito     -> Ajuda do Professor (5)
-     * 9 SegmentationFault  -> (nenhuma)
-     */
     private Tool findToolToCancelAbyss(Programmer p, int abyssId) {
         if (p == null) {
             return null;
@@ -764,17 +727,29 @@ public class GameManager {
 
         int neededToolId;
         switch (abyssId) {
-            case 0, 1, 7 -> neededToolId = 4;          // IDE
-            case 2, 3 -> neededToolId = 3;             // Tratamento de Excepções
-            case 4, 8 -> neededToolId = 5;             // Ajuda do Professor
-            case 5 -> neededToolId = 0;                // Herança
-            case 6 -> neededToolId = 1;                // Programação Funcional
-            default -> {
+            case 0:
+            case 1:
+            case 7:
+                neededToolId = 4; // IDE
+                break;
+            case 2:
+            case 3:
+                neededToolId = 3; // Tratamento de Excepções
+                break;
+            case 4:
+            case 8:
+                neededToolId = 5; // Ajuda do Professor
+                break;
+            case 5:
+                neededToolId = 0; // Herança
+                break;
+            case 6:
+                neededToolId = 1; // Programação Funcional
+                break;
+            default:
                 return null;
-            }
         }
 
-        // devolve a ferramenta desse tipo, se existir
         for (Tool t : p.getTools()) {
             if (t != null && t.getId() == neededToolId) {
                 return t;
@@ -794,11 +769,6 @@ public class GameManager {
         return out;
     }
 
-    /**
-     * Segmentation Fault (cadeia):
-     * Enquanto existir uma casa com SegFault e 2+ jogadores vivos lá,
-     * todos recuam 3 e (na nova casa) aplicam Tool e depois Abyss.
-     */
     private void applySegmentationFaultChain() {
         int safety = 0;
         while (safety < 200) {
@@ -841,7 +811,6 @@ public class GameManager {
             p.setPosition(newPos);
         }
 
-        // após recuo, aplicar efeitos na nova casa
         for (Programmer p : playersHere) {
             applyLandingEffectsAfterForcedMove(p);
         }
@@ -861,7 +830,6 @@ public class GameManager {
         if (tool != null) {
             if (!programmer.hasToolOfType(tool.getId())) {
                 programmer.addTool(tool);
-                // NOTA: aqui não removemos do tabuleiro para não “apagar” cadeias de teste
             }
         }
 
@@ -871,7 +839,7 @@ public class GameManager {
         }
 
         if (abyss.getId() == SegmentationFaultAbyss.ID) {
-            return; // cadeia tratada no loop externo
+            return;
         }
 
         Tool canceller = findToolToCancelAbyss(programmer, abyss.getId());
@@ -900,7 +868,6 @@ public class GameManager {
             }
         }
 
-        // Vitória por eliminação
         int alive = 0;
         Integer lastAlive = null;
         for (Programmer p : programmers) {
