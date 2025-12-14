@@ -434,9 +434,6 @@ public class GameManager {
 
         // Se está preso: não joga, mas o avanço do turno acontece em react
         if (current.isTrapped()) {
-            // Liberta o jogador quando ele perde a vez
-            current.setState("Em Jogo");
-
             setLastMoveNoChange(currentId, current.getPosition(), nrPositions);
             this.pendingReaction = true;
             this.pendingReason = PENDING_REASON_TRAPPED;
@@ -461,7 +458,7 @@ public class GameManager {
             }
         }
 
-        // Movimento normal com bounce-back
+        // Movimento normal
         this.lastDiceValue = nrPositions;
         this.lastPlayerId = currentId;
         this.lastAbyss = null;
@@ -470,6 +467,11 @@ public class GameManager {
 
         int from = current.getPosition();
         int to = calculateNewPosition(from, nrPositions);
+
+        // Se ultrapassar a meta, movimento é INVÁLIDO
+        if (to > boardSize) {
+            return false;
+        }
 
         this.lastFromPosition = from;
         this.lastToPosition = to;
@@ -492,18 +494,11 @@ public class GameManager {
         this.lastToolCollected = null;
     }
 
-    // Bounce-back: se passar da meta, reflete para trás
+    // Se ultrapassar a meta, o movimento é INVÁLIDO
     private int calculateNewPosition(int from, int nrPositions) {
         int to = from + nrPositions;
-
-        if (to > boardSize) {
-            int overshoot = to - boardSize;
-            to = boardSize - overshoot;
-            if (to < 1) {
-                to = 1;
-            }
-        }
-
+        // Não faz bounce-back - simplesmente retorna a posição calculada
+        // O moveCurrentPlayer verifica se ultrapassa e considera inválido
         return to;
     }
 
@@ -576,8 +571,8 @@ public class GameManager {
 
     private String handleTrappedPlayer(Programmer current) {
         clearPendingState();
-        // Jogador continua Preso após perder a vez
-        // Será libertado apenas quando tiver a ferramenta "Ajuda do Professor"
+        // Liberta o jogador AGORA (após perder a vez)
+        current.setState("Em Jogo");
         turnCount++;
         advanceTurnCursor();
         return "Ciclo Infinito!";
@@ -618,7 +613,7 @@ public class GameManager {
             return handleSegmentationFault(pos, abyss);
         }
 
-        if (abyss.getId() == InfiniteLoopAbyss.ID) {
+        if (abyss.getId() == 8) { // Ciclo Infinito
             return handleInfiniteLoop(current, abyss);
         }
 
@@ -645,7 +640,8 @@ public class GameManager {
             applySegmentationFaultToAll(here);
             return abyss.getName() + "!";
         }
-        return null;
+        // Mesmo sem ativar, retorna mensagem (abismo existe na posição)
+        return abyss.getName() + "!";
     }
 
     private String handleRegularAbyss(Programmer current, Abyss abyss) {
