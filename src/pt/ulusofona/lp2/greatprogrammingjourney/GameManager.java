@@ -458,7 +458,7 @@ public class GameManager {
             }
         }
 
-        // Movimento normal
+        // Movimento normal com bounce-back
         this.lastDiceValue = nrPositions;
         this.lastPlayerId = currentId;
         this.lastAbyss = null;
@@ -467,11 +467,6 @@ public class GameManager {
 
         int from = current.getPosition();
         int to = calculateNewPosition(from, nrPositions);
-
-        // Se ultrapassar a meta, movimento é INVÁLIDO
-        if (to > boardSize) {
-            return false;
-        }
 
         this.lastFromPosition = from;
         this.lastToPosition = to;
@@ -494,11 +489,23 @@ public class GameManager {
         this.lastToolCollected = null;
     }
 
-    // Se ultrapassar a meta, o movimento é INVÁLIDO
+    // Bounce-back: se passar da meta, o jogador "bate" e volta para trás
     private int calculateNewPosition(int from, int nrPositions) {
         int to = from + nrPositions;
-        // Não faz bounce-back - simplesmente retorna a posição calculada
-        // O moveCurrentPlayer verifica se ultrapassa e considera inválido
+
+        // Se ultrapassar a meta, calcula o bounce-back
+        if (to > boardSize) {
+            // Calcula quanto ultrapassou
+            int overshoot = to - boardSize;
+            // Volta para trás a partir da meta
+            to = boardSize - overshoot;
+
+            // Se o bounce-back levar a posição < 1, fica na posição 1
+            if (to < 1) {
+                to = 1;
+            }
+        }
+
         return to;
     }
 
@@ -613,10 +620,7 @@ public class GameManager {
             return handleSegmentationFault(pos, abyss);
         }
 
-        if (abyss.getId() == 8) { // Ciclo Infinito
-            return handleInfiniteLoop(current, abyss);
-        }
-
+        // Todos os outros abismos (incluindo Ciclo Infinito) vão para handleRegularAbyss
         return handleRegularAbyss(current, abyss);
     }
 
