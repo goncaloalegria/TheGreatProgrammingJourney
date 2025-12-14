@@ -189,26 +189,42 @@ public class GameManager {
         HashSet<Integer> occupiedSlots = new HashSet<>();
 
         for (String[] row : cfg) {
-            if (row == null) continue;
+            if (row == null) {
+                continue;
+            }
 
-            if (row.length < 3) continue;
+            if (row.length < 3) {
+                continue;
+            }
 
             Integer tipo = parseIntOrNull(row[0]);
             Integer id = parseIntOrNull(row[1]);
             Integer pos = parseIntOrNull(row[2]);
 
-            if (tipo == null || id == null || pos == null) return false;
-            if (tipo != 0 && tipo != 1) return false;
-
-            if (tipo == 0) {
-                if (id < 0 || id > 9) return false;
-            } else {
-                if (id < 0 || id > 5) return false;
+            if (tipo == null || id == null || pos == null) {
+                return false;
+            }
+            if (tipo != 0 && tipo != 1) {
+                return false;
             }
 
-            if (pos <= 1 || pos >= boardSize) return false;
+            if (tipo == 0) {
+                if (id < 0 || id > 9) {
+                    return false;
+                }
+            } else {
+                if (id < 0 || id > 5) {
+                    return false;
+                }
+            }
 
-            if (occupiedSlots.contains(pos)) return false;
+            if (pos <= 1 || pos >= boardSize) {
+                return false;
+            }
+
+            if (occupiedSlots.contains(pos)) {
+                return false;
+            }
             occupiedSlots.add(pos);
         }
 
@@ -217,27 +233,39 @@ public class GameManager {
 
     private void placeConfiguredItems(String[][] cfg) {
         for (String[] row : cfg) {
-            if (row == null) continue;
-            if (row.length < 3) continue;
+            if (row == null) {
+                continue;
+            }
+            if (row.length < 3) {
+                continue;
+            }
 
             Integer tipo = parseIntOrNull(row[0]);
             Integer id = parseIntOrNull(row[1]);
             Integer pos = parseIntOrNull(row[2]);
 
-            if (tipo == null || id == null || pos == null) continue;
+            if (tipo == null || id == null || pos == null) {
+                continue;
+            }
 
             if (tipo == 0) {
                 Abyss abyss = createAbyss(id, pos);
-                if (abyss != null) addAbyss(abyss);
+                if (abyss != null) {
+                    addAbyss(abyss);
+                }
             } else {
                 Tool tool = createTool(id, pos);
-                if (tool != null) addTool(tool);
+                if (tool != null) {
+                    addTool(tool);
+                }
             }
         }
     }
 
     private Integer parseIntOrNull(String s) {
-        if (s == null) return null;
+        if (s == null) {
+            return null;
+        }
         try {
             return Integer.parseInt(s.trim());
         } catch (NumberFormatException e) {
@@ -269,18 +297,24 @@ public class GameManager {
 
     public String[] getProgrammerInfo(int id) {
         Programmer programmer = idToProgrammer.get(id);
-        if (programmer == null) return null;
+        if (programmer == null) {
+            return null;
+        }
         return programmer.getInfoAsArray();
     }
 
     public String getProgrammerInfoAsStr(int id) {
         Programmer programmer = idToProgrammer.get(id);
-        if (programmer == null) return null;
+        if (programmer == null) {
+            return null;
+        }
         return programmer.getInfoAsString();
     }
 
     public String getProgrammersInfo() {
-        if (programmers == null || programmers.isEmpty()) return "";
+        if (programmers == null || programmers.isEmpty()) {
+            return "";
+        }
 
         ArrayList<Programmer> ordered = new ArrayList<>(programmers);
         ordered.sort(Comparator.comparingInt(Programmer::getId));
@@ -292,7 +326,9 @@ public class GameManager {
             sb.append(p.getName())
                     .append(" : ")
                     .append(p.getToolsInfo());
-            if (i < ordered.size() - 1) sb.append(" | ");
+            if (i < ordered.size() - 1) {
+                sb.append(" | ");
+            }
         }
         return sb.toString();
     }
@@ -331,7 +367,9 @@ public class GameManager {
     }
 
     public int getCurrentPlayerID() {
-        if (turnOrderIds == null || turnOrderIds.isEmpty()) return -1;
+        if (turnOrderIds == null || turnOrderIds.isEmpty()) {
+            return -1;
+        }
         return turnOrderIds.get(turnCursor);
     }
 
@@ -350,7 +388,9 @@ public class GameManager {
     }
 
     public String getLastDiceImageName() {
-        if (lastDiceValue < 1 || lastDiceValue > 6) return null;
+        if (lastDiceValue < 1 || lastDiceValue > 6) {
+            return null;
+        }
         return "dice" + lastDiceValue + ".png";
     }
 
@@ -368,9 +408,15 @@ public class GameManager {
      * - o turno avança em reactToAbyssOrTool()
      */
     public boolean moveCurrentPlayer(int nrPositions) {
-        if (gameOver) return false;
-        if (turnOrderIds == null || turnOrderIds.isEmpty()) return false;
-        if (nrPositions < 1 || nrPositions > 6) return false;
+        if (gameOver) {
+            return false;
+        }
+        if (turnOrderIds == null || turnOrderIds.isEmpty()) {
+            return false;
+        }
+        if (nrPositions < 1 || nrPositions > 6) {
+            return false;
+        }
 
         // Reset pendências anteriores
         this.pendingReaction = false;
@@ -383,7 +429,9 @@ public class GameManager {
 
         int currentId = getCurrentPlayerID();
         Programmer current = idToProgrammer.get(currentId);
-        if (current == null) return false;
+        if (current == null) {
+            return false;
+        }
 
         // Restrições por linguagem
         String firstLang = current.getFirstLanguage();
@@ -436,7 +484,9 @@ public class GameManager {
     }
 
     private boolean selectNextPlayablePlayer() {
-        if (turnOrderIds == null || turnOrderIds.isEmpty()) return false;
+        if (turnOrderIds == null || turnOrderIds.isEmpty()) {
+            return false;
+        }
 
         int safety = 0;
         while (safety < turnOrderIds.size()) {
@@ -471,7 +521,9 @@ public class GameManager {
         if (to > boardSize) {
             int overshoot = to - boardSize;
             to = boardSize - overshoot;
-            if (to < 1) to = 1;
+            if (to < 1) {
+                to = 1;
+            }
         }
 
         return to;
@@ -610,9 +662,13 @@ public class GameManager {
         pendingReason = PENDING_REASON_NONE;
 
         // Retorno: prioridade ao abismo (se ativou), senão tool msg
-        if (abyssActivated && abyssMsg != null) return abyssMsg;
+        if (abyssActivated && abyssMsg != null) {
+            return abyssMsg;
+        }
 
-        if (toolMsg != null) return toolMsg;
+        if (toolMsg != null) {
+            return toolMsg;
+        }
 
         // Se era casa de tool mas já foi apanhada => devolver string vazia (não null)
         if (abyss == null && boardTool == null && toolExistedHereOriginally) {
@@ -630,24 +686,32 @@ public class GameManager {
         while (safety < turnOrderIds.size()) {
             int id = turnOrderIds.get(turnCursor);
             Programmer p = idToProgrammer.get(id);
-            if (p != null && p.canPlay()) return;
+            if (p != null && p.canPlay()) {
+                return;
+            }
             turnCursor = (turnCursor + 1) % turnOrderIds.size();
             safety++;
         }
     }
 
     private void advanceTurnCursorToNextPlayable() {
-        if (turnOrderIds == null || turnOrderIds.isEmpty()) return;
+        if (turnOrderIds == null || turnOrderIds.isEmpty()) {
+            return;
+        }
 
         turnCursor = (turnCursor + 1) % turnOrderIds.size();
         advanceTurnCursorToNextPlayableIfCurrentCantPlay();
     }
 
     private void removePlayerFromTurnOrder(int id) {
-        if (turnOrderIds == null || turnOrderIds.isEmpty()) return;
+        if (turnOrderIds == null || turnOrderIds.isEmpty()) {
+            return;
+        }
 
         int idx = turnOrderIds.indexOf(id);
-        if (idx < 0) return;
+        if (idx < 0) {
+            return;
+        }
 
         turnOrderIds.remove(idx);
 
@@ -664,8 +728,12 @@ public class GameManager {
             turnCursor--;
         }
 
-        if (turnCursor < 0) turnCursor = 0;
-        if (turnCursor >= turnOrderIds.size()) turnCursor = 0;
+        if (turnCursor < 0) {
+            turnCursor = 0;
+        }
+        if (turnCursor >= turnOrderIds.size()) {
+            turnCursor = 0;
+        }
     }
 
     /**
@@ -682,7 +750,9 @@ public class GameManager {
      * 9 SegmentationFault  -> (nenhuma)
      */
     private Tool findToolToCancelAbyss(Programmer p, int abyssId) {
-        if (p == null) return null;
+        if (p == null) {
+            return null;
+        }
 
         int neededToolId;
         switch (abyssId) {
@@ -732,8 +802,12 @@ public class GameManager {
                 Integer pos = entry.getKey();
                 Abyss abyss = entry.getValue();
 
-                if (abyss == null) continue;
-                if (abyss.getId() != SegmentationFaultAbyss.ID) continue;
+                if (abyss == null) {
+                    continue;
+                }
+                if (abyss.getId() != SegmentationFaultAbyss.ID) {
+                    continue;
+                }
 
                 List<Programmer> here = getAlivePlayersAt(pos);
                 if (here.size() >= 2) {
@@ -742,7 +816,9 @@ public class GameManager {
                 }
             }
 
-            if (!triggered) break;
+            if (!triggered) {
+                break;
+            }
         }
     }
 
@@ -751,7 +827,9 @@ public class GameManager {
 
         for (Programmer p : playersHere) {
             int newPos = p.getPosition() - retreat;
-            if (newPos < 1) newPos = 1;
+            if (newPos < 1) {
+                newPos = 1;
+            }
             p.setPosition(newPos);
         }
 
@@ -762,8 +840,12 @@ public class GameManager {
     }
 
     private void applyLandingEffectsAfterForcedMove(Programmer programmer) {
-        if (programmer == null) return;
-        if (programmer.isDefeated()) return;
+        if (programmer == null) {
+            return;
+        }
+        if (programmer.isDefeated()) {
+            return;
+        }
 
         int pos = programmer.getPosition();
 
@@ -776,7 +858,9 @@ public class GameManager {
         }
 
         Abyss abyss = abyssesByPosition.get(pos);
-        if (abyss == null) return;
+        if (abyss == null) {
+            return;
+        }
 
         if (abyss.getId() == SegmentationFaultAbyss.ID) {
             return; // cadeia tratada no loop externo
@@ -796,7 +880,9 @@ public class GameManager {
     }
 
     public boolean gameIsOver() {
-        if (gameOver) return true;
+        if (gameOver) {
+            return true;
+        }
 
         for (Programmer programmer : programmers) {
             if (programmer.getPosition() == boardSize && programmer.isPlaying()) {
@@ -861,7 +947,9 @@ public class GameManager {
     private String getWinnerName() {
         if (winnerId != null) {
             Programmer winner = idToProgrammer.get(winnerId);
-            if (winner != null) return winner.getName();
+            if (winner != null) {
+                return winner.getName();
+            }
         }
         return "";
     }
@@ -900,12 +988,16 @@ public class GameManager {
     }
 
     public void addAbyss(Abyss abyss) {
-        if (abyss == null) return;
+        if (abyss == null) {
+            return;
+        }
         abyssesByPosition.put(abyss.getPosition(), abyss);
     }
 
     public void addTool(Tool tool) {
-        if (tool == null) return;
+        if (tool == null) {
+            return;
+        }
         toolsByPosition.put(tool.getPosition(), tool);
         originalToolPositions.add(tool.getPosition());
     }
@@ -941,7 +1033,9 @@ public class GameManager {
     // ---------------------- Save / Load ----------------------
 
     public boolean saveGame(File file) {
-        if (file == null) return false;
+        if (file == null) {
+            return false;
+        }
 
         try (PrintWriter out = new PrintWriter(new FileWriter(file))) {
             out.println(boardSize);
@@ -1035,23 +1129,31 @@ public class GameManager {
     }
 
     private void loadBoardSize(Scanner scanner) throws InvalidFileException {
-        if (!scanner.hasNextLine()) throw new InvalidFileException("Ficheiro vazio");
+        if (!scanner.hasNextLine()) {
+            throw new InvalidFileException("Ficheiro vazio");
+        }
         boardSize = Integer.parseInt(scanner.nextLine().trim());
     }
 
     private void loadProgrammers(Scanner scanner) throws InvalidFileException {
-        if (!scanner.hasNextLine()) throw new InvalidFileException("Faltam dados de programadores");
+        if (!scanner.hasNextLine()) {
+            throw new InvalidFileException("Faltam dados de programadores");
+        }
 
         int numProgrammers = Integer.parseInt(scanner.nextLine().trim());
         programmers = new ArrayList<>();
         idToProgrammer = new HashMap<>();
 
         for (int i = 0; i < numProgrammers; i++) {
-            if (!scanner.hasNextLine()) throw new InvalidFileException("Dados de programadores incompletos");
+            if (!scanner.hasNextLine()) {
+                throw new InvalidFileException("Dados de programadores incompletos");
+            }
 
             String line = scanner.nextLine();
             String[] parts = line.split("\\|", -1);
-            if (parts.length < 6) throw new InvalidFileException("Linha de programador inválida: " + line);
+            if (parts.length < 6) {
+                throw new InvalidFileException("Linha de programador inválida: " + line);
+            }
 
             int id = Integer.parseInt(parts[0]);
             String name = parts[1];
@@ -1081,13 +1183,17 @@ public class GameManager {
     }
 
     private void loadAbysses(Scanner scanner) throws InvalidFileException {
-        if (!scanner.hasNextLine()) throw new InvalidFileException("Faltam dados de abismos");
+        if (!scanner.hasNextLine()) {
+            throw new InvalidFileException("Faltam dados de abismos");
+        }
 
         int numAbysses = Integer.parseInt(scanner.nextLine().trim());
         abyssesByPosition = new HashMap<>();
 
         for (int i = 0; i < numAbysses; i++) {
-            if (!scanner.hasNextLine()) throw new InvalidFileException("Dados de abismos incompletos");
+            if (!scanner.hasNextLine()) {
+                throw new InvalidFileException("Dados de abismos incompletos");
+            }
 
             String line = scanner.nextLine();
             String[] parts = line.split("\\|", -1);
@@ -1097,23 +1203,31 @@ public class GameManager {
             int pos = Integer.parseInt(parts[1]);
 
             Abyss a = createAbyss(abyssId, pos);
-            if (a != null) abyssesByPosition.put(pos, a);
+            if (a != null) {
+                abyssesByPosition.put(pos, a);
+            }
         }
     }
 
     private void loadTools(Scanner scanner) throws InvalidFileException {
-        if (!scanner.hasNextLine()) throw new InvalidFileException("Faltam dados de ferramentas");
+        if (!scanner.hasNextLine()) {
+            throw new InvalidFileException("Faltam dados de ferramentas");
+        }
 
         int numTools = Integer.parseInt(scanner.nextLine().trim());
         toolsByPosition = new HashMap<>();
         originalToolPositions = new HashSet<>();
 
         for (int i = 0; i < numTools; i++) {
-            if (!scanner.hasNextLine()) throw new InvalidFileException("Dados de ferramentas incompletos");
+            if (!scanner.hasNextLine()) {
+                throw new InvalidFileException("Dados de ferramentas incompletos");
+            }
 
             String line = scanner.nextLine();
             String[] parts = line.split("\\|", -1);
-            if (parts.length < 2) throw new InvalidFileException("Linha de ferramenta inválida: " + line);
+            if (parts.length < 2) {
+                throw new InvalidFileException("Linha de ferramenta inválida: " + line);
+            }
 
             int toolId = Integer.parseInt(parts[0]);
             int pos = Integer.parseInt(parts[1]);
@@ -1127,30 +1241,42 @@ public class GameManager {
     }
 
     private void loadTurnOrder(Scanner scanner) throws InvalidFileException {
-        if (!scanner.hasNextLine()) throw new InvalidFileException("Faltam dados da ordem de jogo");
+        if (!scanner.hasNextLine()) {
+            throw new InvalidFileException("Faltam dados da ordem de jogo");
+        }
 
         int orderSize = Integer.parseInt(scanner.nextLine().trim());
         turnOrderIds = new ArrayList<>();
 
         for (int i = 0; i < orderSize; i++) {
-            if (!scanner.hasNextLine()) throw new InvalidFileException("Dados da ordem de jogo incompletos");
+            if (!scanner.hasNextLine()) {
+                throw new InvalidFileException("Dados da ordem de jogo incompletos");
+            }
             int id = Integer.parseInt(scanner.nextLine().trim());
             turnOrderIds.add(id);
         }
     }
 
     private void loadGameState(Scanner scanner) throws InvalidFileException {
-        if (!scanner.hasNextLine()) throw new InvalidFileException("Faltam dados do estado do jogo");
+        if (!scanner.hasNextLine()) {
+            throw new InvalidFileException("Faltam dados do estado do jogo");
+        }
         turnCursor = Integer.parseInt(scanner.nextLine().trim());
 
-        if (!scanner.hasNextLine()) throw new InvalidFileException("Faltam dados do estado do jogo");
+        if (!scanner.hasNextLine()) {
+            throw new InvalidFileException("Faltam dados do estado do jogo");
+        }
         gameOver = Boolean.parseBoolean(scanner.nextLine().trim());
 
-        if (!scanner.hasNextLine()) throw new InvalidFileException("Faltam dados do estado do jogo");
+        if (!scanner.hasNextLine()) {
+            throw new InvalidFileException("Faltam dados do estado do jogo");
+        }
         int winId = Integer.parseInt(scanner.nextLine().trim());
         winnerId = (winId < 0 ? null : winId);
 
-        if (!scanner.hasNextLine()) throw new InvalidFileException("Faltam dados do estado do jogo");
+        if (!scanner.hasNextLine()) {
+            throw new InvalidFileException("Faltam dados do estado do jogo");
+        }
         turnCount = Integer.parseInt(scanner.nextLine().trim());
     }
 
@@ -1193,6 +1319,8 @@ public class GameManager {
     }
 
     private void ensureRandom() {
-        if (random == null) random = new Random();
+        if (random == null) {
+            random = new Random();
+        }
     }
 }
