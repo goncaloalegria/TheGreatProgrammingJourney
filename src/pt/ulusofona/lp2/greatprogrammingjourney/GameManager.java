@@ -637,6 +637,14 @@ public class GameManager {
     private String handleRegularAbyss(Programmer current, Abyss abyss) {
         Tool canceller = current.findToolToCancelAbyss(abyss.getId());
 
+        // DEBUG CICLO INFINITO
+        if (abyss.getId() == 8) {
+            System.out.println("[CICLO_INFINITO_DEBUG] Abyss: " + abyss.getName());
+            System.out.println("[CICLO_INFINITO_DEBUG] Player: " + current.getName());
+            System.out.println("[CICLO_INFINITO_DEBUG] Player tools: " + current.getToolsInfo());
+            System.out.println("[CICLO_INFINITO_DEBUG] Canceller found: " + (canceller != null ? canceller.getName() : "null"));
+        }
+
         if (canceller != null) {
             current.removeTool(canceller);
             this.lastToolUsed = canceller;
