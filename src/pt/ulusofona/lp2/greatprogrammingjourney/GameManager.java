@@ -334,19 +334,25 @@ public class GameManager {
     }
 
     public String[] getSlotInfo(int position) {
-        if (position < 1 || position > boardSize) return null;
+        if (position < 1 || position > boardSize) {
+            return null;
+        }
 
         String programmersStr = "";
         if (!programmers.isEmpty()) {
             ArrayList<Integer> idsHere = new ArrayList<>();
             for (Programmer programmer : programmers) {
-                if (programmer.getPosition() == position) idsHere.add(programmer.getId());
+                if (programmer.getPosition() == position) {
+                    idsHere.add(programmer.getId());
+                }
             }
             if (!idsHere.isEmpty()) {
                 Collections.sort(idsHere);
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < idsHere.size(); i++) {
-                    if (i > 0) sb.append(",");
+                    if (i > 0) {
+                        sb.append(",");
+                    }
                     sb.append(idsHere.get(i));
                 }
                 programmersStr = sb.toString();
@@ -679,7 +685,9 @@ public class GameManager {
     }
 
     private void advanceTurnCursorToNextPlayableIfCurrentCantPlay() {
-        if (turnOrderIds == null || turnOrderIds.isEmpty()) return;
+        if (turnOrderIds == null || turnOrderIds.isEmpty()) {
+            return;
+        }
 
         // Se o atual não pode jogar, avança até alguém poder
         int safety = 0;
@@ -1044,7 +1052,9 @@ public class GameManager {
             for (Programmer p : programmers) {
                 StringBuilder toolIds = new StringBuilder();
                 for (Tool t : p.getTools()) {
-                    if (toolIds.length() > 0) toolIds.append(",");
+                    if (toolIds.length() > 0) {
+                        toolIds.append(",");
+                    }
                     toolIds.append(t.getId());
                 }
 
@@ -1172,7 +1182,9 @@ public class GameManager {
                     Integer toolId = parseIntOrNull(toolIdStr);
                     if (toolId != null) {
                         Tool tool = createTool(toolId, 0);
-                        if (tool != null) p.addTool(tool);
+                        if (tool != null) {
+                            p.addTool(tool);
+                        }
                     }
                 }
             }
@@ -1197,7 +1209,9 @@ public class GameManager {
 
             String line = scanner.nextLine();
             String[] parts = line.split("\\|", -1);
-            if (parts.length < 2) throw new InvalidFileException("Linha de abismo inválida: " + line);
+            if (parts.length < 2) {
+                throw new InvalidFileException("Linha de abismo inválida: " + line);
+            }
 
             int abyssId = Integer.parseInt(parts[0]);
             int pos = Integer.parseInt(parts[1]);
