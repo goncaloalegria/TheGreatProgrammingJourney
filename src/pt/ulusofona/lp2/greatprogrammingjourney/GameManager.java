@@ -624,20 +624,6 @@ public class GameManager {
         return handleRegularAbyss(current, abyss);
     }
 
-    private String handleInfiniteLoop(Programmer current, Abyss abyss) {
-        Tool canceller = current.findToolToCancelAbyss(abyss.getId());
-
-        if (canceller != null) {
-            current.removeTool(canceller);
-            this.lastToolUsed = canceller;
-            return abyss.getName() + " anulado por " + canceller.getName();
-        }
-
-        // Aplica o efeito (jogador fica Preso)
-        abyss.applyEffect(current, lastDiceValue, lastFromPosition);
-        return abyss.getName() + "!";
-    }
-
     private String handleSegmentationFault(int pos, Abyss abyss) {
         List<Programmer> here = getAlivePlayersAt(pos);
         if (here.size() >= 2) {
@@ -651,13 +637,29 @@ public class GameManager {
     private String handleRegularAbyss(Programmer current, Abyss abyss) {
         Tool canceller = current.findToolToCancelAbyss(abyss.getId());
 
+        // DEBUG - Ver se encontra ferramenta
+        if (abyss.getId() == 1 || abyss.getId() == 2 || abyss.getId() == 8) {
+            System.out.println("[DEBUG] Abyss: " + abyss.getName() + " (ID: " + abyss.getId() + ")");
+            System.out.println("[DEBUG] Canceller: " + (canceller != null ? canceller.getName() + " (ID: " + canceller.getId() + ")" : "null"));
+            System.out.println("[DEBUG] Player tools: " + current.getToolsInfo());
+        }
+
         if (canceller != null) {
             current.removeTool(canceller);
             this.lastToolUsed = canceller;
             return abyss.getName() + " anulado por " + canceller.getName();
         }
 
+        // DEBUG - Ver estado antes e depois
+        if (abyss.getId() == 8) {
+            System.out.println("[DEBUG] Before applyEffect: state = " + current.getState());
+        }
+
         abyss.applyEffect(current, lastDiceValue, lastFromPosition);
+
+        if (abyss.getId() == 8) {
+            System.out.println("[DEBUG] After applyEffect: state = " + current.getState());
+        }
 
         if (current.isDefeated()) {
             removePlayerFromTurnOrder(current.getId());
