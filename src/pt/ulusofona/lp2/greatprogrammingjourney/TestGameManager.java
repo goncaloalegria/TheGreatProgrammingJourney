@@ -5,6 +5,69 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class TestGameManager {
 
+
+    @Test
+    public void testToolCancelsAbyss() {
+        GameManager gm = new GameManager();
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", "Purple"},
+                {"2", "Bob", "Python", "Green"}
+        };
+        String[][] abyssesAndTools = {
+                {"1", "1", "5"},  // Tool Prog. Funcional (ID 1) at position 5
+                {"0", "1", "10"}  // Abyss Erro Lógica (ID 1) at position 10
+        };
+        gm.createInitialBoard(playerInfo, 15, abyssesAndTools);
+
+        // Turno 1: Jogador 1 apanha ferramenta
+        gm.moveCurrentPlayer(4);  // pos 1 -> 5
+        String msg1 = gm.reactToAbyssOrTool();
+        System.out.println("Turno 1 - React: " + msg1);
+        System.out.println("Turno 1 - Player 1: " + gm.getProgrammerInfoAsStr(1));
+
+        // Turno 2: Jogador 2 move
+        gm.moveCurrentPlayer(2);
+        gm.reactToAbyssOrTool();
+
+        // Turno 3: Jogador 1 vai para abismo
+        boolean moved = gm.moveCurrentPlayer(5);  // pos 5 -> 10
+        System.out.println("\nTurno 3 - moveCurrentPlayer returned: " + moved);
+
+        String msg2 = gm.reactToAbyssOrTool();
+        System.out.println("Turno 3 - React: " + msg2);
+        System.out.println("Turno 3 - Player 1: " + gm.getProgrammerInfoAsStr(1));
+
+        String[] info = gm.getProgrammerInfo(1);
+        int pos = Integer.parseInt(info[4]);
+        System.out.println("\nPosição final: " + pos);
+        System.out.println("Esperado: 10");
+        System.out.println("Ferramenta anulou: " + (msg2 != null && msg2.contains("anulado")));
+    }
+
+    @Test
+    public void testToolIsAdded() {
+        GameManager gm = new GameManager();
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", "Purple"},
+                {"2", "Bob", "Python", "Green"}
+        };
+        String[][] abyssesAndTools = {
+                {"1", "1", "5"}  // Tool ID 1 at position 5
+        };
+        gm.createInitialBoard(playerInfo, 10, abyssesAndTools);
+
+        gm.moveCurrentPlayer(4);  // Move to position 5
+        String msg = gm.reactToAbyssOrTool();
+
+        String[] info = gm.getProgrammerInfo(1);
+        System.out.println("Ferramentas: " + info[5]);
+        System.out.println("React msg: " + msg);
+
+        assertNotEquals("No tools", info[5]);
+    }
+
+
+
     @Test
     public void createInitialBoardValid(){
         GameManager gameManager = new GameManager();

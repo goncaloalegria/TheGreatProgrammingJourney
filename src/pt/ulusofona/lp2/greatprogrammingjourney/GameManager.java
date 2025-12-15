@@ -491,17 +491,21 @@ public class GameManager {
                 current.setState("Em Jogo");
                 // Continua o movimento normalmente (não retorna aqui)
             } else {
-                // Não tem ferramenta, fica preso
+                // Não tem ferramenta, fica preso - mas retorna true
+                // O react vai lidar com avançar o turno
                 setLastMoveNoChange(currentId, current.getPosition(), nrPositions);
                 this.pendingReaction = true;
                 this.pendingReason = PENDING_REASON_TRAPPED;
-                return false;
+                return true;  // Retorna true, react lida com o resto
             }
         }
 
-        // RestriÃ§Ãµes por linguagem
+        // Restrições por linguagem DESATIVADAS para debug
+        // NOTA: C# e C++ NÃO contam como C (apenas "C" exato)
+        /*
         String firstLang = current.getFirstLanguage();
         if (firstLang != null) {
+            // Assembly: máximo 2 casas
             if (firstLang.equalsIgnoreCase("Assembly") && nrPositions > 2) {
                 setLastMoveNoChange(currentId, current.getPosition(), nrPositions);
                 this.pendingReaction = true;
@@ -509,13 +513,15 @@ public class GameManager {
                 return false;
             }
 
-            if (firstLang.equalsIgnoreCase("C") && nrPositions > 3) {
+            // C (apenas "C" ou "c", não "C++" nem "C#"): máximo 3 casas
+            if ((firstLang.equals("C") || firstLang.equals("c")) && nrPositions > 3) {
                 setLastMoveNoChange(currentId, current.getPosition(), nrPositions);
                 this.pendingReaction = true;
                 this.pendingReason = PENDING_REASON_INVALID_MOVE;
                 return false;
             }
         }
+        */
 
         // Movimento normal com bounce-back
         this.lastDiceValue = nrPositions;
@@ -640,7 +646,6 @@ public class GameManager {
         this.lastToolCollected = null;
     }
 
-    // âœ… Remove a tool do tabuleiro apenas quando alguÃ©m a apanha (e nÃ£o a tinha)
     private String processTool(Programmer current, int pos) {
         Tool boardTool = toolsByPosition.get(pos);
 
@@ -651,11 +656,13 @@ public class GameManager {
         if (!current.hasToolOfType(boardTool.getId())) {
             // Criar uma nova instância da ferramenta para o jogador
             Tool newTool = createTool(boardTool.getId(), pos);
-            current.addTool(newTool);
-            this.lastToolCollected = newTool;
-
-            // Ferramenta PERMANECE no tabuleiro - pode ser apanhada por todos
-            return "Recolheu ferramenta: " + boardTool.getName();
+            if (newTool != null) {
+                current.addTool(newTool);
+                this.lastToolCollected = newTool;
+                return "Recolheu ferramenta: " + boardTool.getName();
+            } else {
+                return null;  // Ferramenta não foi criada
+            }
         } else {
             return "Já possui a ferramenta: " + boardTool.getName();
         }
