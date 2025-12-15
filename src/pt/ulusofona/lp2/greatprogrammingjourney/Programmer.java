@@ -14,11 +14,11 @@ public class Programmer {
     private int position;
     private String state;
 
-    // Histórico das últimas posições ANTES de cada jogada "normal"
-    // Vamos guardar até 2 posições anteriores
+    // HistÃ³rico das Ãºltimas posiÃ§Ãµes ANTES de cada jogada "normal"
+    // Vamos guardar atÃ© 2 posiÃ§Ãµes anteriores
     private Deque<Integer> positionHistory;
 
-    // Ferramentas no inventário do jogador
+    // Ferramentas no inventÃ¡rio do jogador
     private List<Tool> tools;
 
     public Programmer(int id, String name, String languages, String color) {
@@ -26,7 +26,7 @@ public class Programmer {
         this.name = name;
         this.languages = languages;
         this.color = color;
-        this.position = 1;           // Posição inicial
+        this.position = 1;           // PosiÃ§Ã£o inicial
         this.state = "Em Jogo";      // Estado inicial
         this.positionHistory = new ArrayDeque<>();
         this.tools = new ArrayList<>();
@@ -59,7 +59,7 @@ public class Programmer {
 
     /**
      * Retorna a primeira linguagem do programador.
-     * As linguagens estão separadas por ";" no atributo languages.
+     * As linguagens estÃ£o separadas por ";" no atributo languages.
      */
     public String getFirstLanguage() {
         if (languages == null || languages.trim().isEmpty()) {
@@ -72,8 +72,8 @@ public class Programmer {
         return null;
     }
 
-    // Setters básicos: usados por abismos, loadGame, etc.
-    // NÃO mexem no histórico (porque não são movimentos "normais" do dado)
+    // Setters bÃ¡sicos: usados por abismos, loadGame, etc.
+    // NÃƒO mexem no histÃ³rico (porque nÃ£o sÃ£o movimentos "normais" do dado)
     public void setPosition(int position) {
         this.position = position;
     }
@@ -82,17 +82,17 @@ public class Programmer {
         this.state = state;
     }
 
-    // ---------- Histórico de posições ----------
+    // ---------- HistÃ³rico de posiÃ§Ãµes ----------
 
     /**
      * Deve ser usado quando o jogador se move por causa do dado
-     * (movimento normal). Atualiza o histórico e a posição atual.
+     * (movimento normal). Atualiza o histÃ³rico e a posiÃ§Ã£o atual.
      */
     public void recordMove(int newPosition) {
-        // guarda a posição antes de se mover
+        // guarda a posiÃ§Ã£o antes de se mover
         positionHistory.addLast(this.position);
 
-        // Só precisamos das duas últimas posições anteriores
+        // SÃ³ precisamos das duas Ãºltimas posiÃ§Ãµes anteriores
         if (positionHistory.size() > 2) {
             positionHistory.removeFirst();
         }
@@ -101,22 +101,22 @@ public class Programmer {
     }
 
     /**
-     * Devolve a posição onde o jogador estava há 2 movimentos atrás.
-     * Se não houver histórico suficiente, devolve 1 (início do tabuleiro).
+     * Devolve a posiÃ§Ã£o onde o jogador estava hÃ¡ 2 movimentos atrÃ¡s.
+     * Se nÃ£o houver histÃ³rico suficiente, devolve 1 (inÃ­cio do tabuleiro).
      */
     public int getPositionTwoMovesAgo() {
         if (positionHistory.size() < 2) {
-            // Não houve 2 movimentos "normais" ainda
+            // NÃ£o houve 2 movimentos "normais" ainda
             return 1;
         }
-        // history guarda [pos há 2 jogadas, pos há 1 jogada]
+        // history guarda [pos hÃ¡ 2 jogadas, pos hÃ¡ 1 jogada]
         return positionHistory.peekFirst();
     }
 
     // ---------- Tools ----------
 
     /**
-     * Adiciona uma ferramenta ao inventário do jogador.
+     * Adiciona uma ferramenta ao inventÃ¡rio do jogador.
      */
     public void addTool(Tool tool) {
         if (tool != null) {
@@ -125,7 +125,7 @@ public class Programmer {
     }
 
     /**
-     * Verifica se o jogador já tem uma ferramenta de um determinado tipo (ID).
+     * Verifica se o jogador jÃ¡ tem uma ferramenta de um determinado tipo (ID).
      */
     public boolean hasToolOfType(int toolId) {
         for (Tool tool : tools) {
@@ -139,7 +139,7 @@ public class Programmer {
     /**
      * Procura e devolve uma ferramenta que possa anular o abismo dado.
      * Devolve a ferramenta com o ID mais baixo (prioridade).
-     * @return a ferramenta encontrada, ou null se não houver nenhuma compatível
+     * @return a ferramenta encontrada, ou null se nÃ£o houver nenhuma compatÃ­vel
      */
     public Tool findToolToCancelAbyss(int abyssId) {
         Tool bestTool = null;
@@ -156,7 +156,7 @@ public class Programmer {
     }
 
     /**
-     * Remove uma ferramenta do inventário do jogador.
+     * Remove uma ferramenta do inventÃ¡rio do jogador.
      */
     public void removeTool(Tool tool) {
         if (tool != null) {
@@ -228,13 +228,12 @@ public class Programmer {
 
     public String[] getInfoAsArray() {
         return new String[]{
-                String.valueOf(id),
-                name,
-                getOrderedLanguages(),
-                color,
-                String.valueOf(position),
-                state,
-                getToolsInfo()
+                String.valueOf(id),        // [0] id
+                name,                       // [1] name
+                String.valueOf(position),   // [2] position
+                getToolsInfo(),             // [3] toolsInfo
+                getOrderedLanguages(),      // [4] orderedLanguages
+                state                       // [5] state
         };
     }
 
@@ -248,20 +247,20 @@ public class Programmer {
                 " | " + state;
     }
 
-    // Mantemos por compatibilidade, se já estiver a ser usado
+    // Mantemos por compatibilidade, se jÃ¡ estiver a ser usado
     public void moveTo(int newPosition) {
         this.position = newPosition;
     }
 
     /**
-     * Verifica se o jogador está em jogo (não derrotado nem preso).
+     * Verifica se o jogador estÃ¡ em jogo (nÃ£o derrotado nem preso).
      */
     public boolean isPlaying() {
         return "Em Jogo".equals(state);
     }
 
     /**
-     * Verifica se o jogador está preso (Ciclo Infinito).
+     * Verifica se o jogador estÃ¡ preso (Ciclo Infinito).
      */
     public boolean isTrapped() {
         return "Preso".equals(state);
@@ -276,7 +275,7 @@ public class Programmer {
 
     /**
      * Verifica se o jogador pode jogar neste turno.
-     * Só pode jogar se estiver "Em Jogo" (não preso nem derrotado).
+     * SÃ³ pode jogar se estiver "Em Jogo" (nÃ£o preso nem derrotado).
      */
     public boolean canPlay() {
         return isPlaying();

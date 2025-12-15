@@ -95,6 +95,149 @@ public class TestGameManager {
         assertEquals(3, currentPlayerId, "getCurrentPlayerID deve retornar 3 (menor ID)");
     }
 
+    @Test
+    public void testBSOD_ThreePlayersOneDefeated() {
+        GameManager gm = new GameManager();
+
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", "Purple"},
+                {"2", "Bob", "Python", "Green"},
+                {"3", "Charlie", "C++", "Brown"}
+        };
+
+        String[][] abyssesAndTools = {
+                {"0", "7", "5"}  // BSOD na posição 5
+        };
+
+        gm.createInitialBoard(playerInfo, 10, abyssesAndTools);
+
+        System.out.println("=== ESTADO INICIAL ===");
+        for (int i = 1; i <= 3; i++) {
+            System.out.println(gm.getProgrammerInfoAsStr(i));
+        }
+
+        // Jogador 1 move 4 casas → vai para posição 5 (BSOD)
+        System.out.println("\n=== JOGADOR 1 MOVE 4 CASAS ===");
+        boolean moved = gm.moveCurrentPlayer(4);
+        System.out.println("Move result: " + moved);
+
+        String msg = gm.reactToAbyssOrTool();
+        System.out.println("React message: " + msg);
+
+        System.out.println("\n=== ESTADO APÓS REACT ===");
+        for (int i = 1; i <= 3; i++) {
+            String info = gm.getProgrammerInfoAsStr(i);
+            if (info != null) {
+                System.out.println(info);
+            }
+        }
+
+        // Contar jogadores vivos
+        int alive = 0;
+        for (int i = 1; i <= 3; i++) {
+            String[] info = gm.getProgrammerInfo(i);
+            if (info != null && !info[5].equals("Derrotado")) {
+                alive++;
+            }
+        }
+
+        System.out.println("\n=== CONTAGEM ===");
+        System.out.println("Jogadores vivos: " + alive);
+        System.out.println("Esperado: 2");
+
+        assertEquals(2, alive, "Deveria haver 2 jogadores vivos após um BSOD");
+    }
+
+
+    @Test
+    public void test_LogicErrorVsTool() {
+        GameManager gm = new GameManager();
+
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", "Purple"},
+                {"2", "Bob", "Python", "Green"}
+        };
+
+        String[][] abyssesAndTools = {
+                {"1", "1", "5"},  // Ferramenta Prog. Funcional na posição 5
+                {"0", "1", "10"}  // Abismo Erro Lógica na posição 10
+        };
+
+        gm.createInitialBoard(playerInfo, 15, abyssesAndTools);
+
+        System.out.println("=== TURNO 1: Jogador 1 move 4 (vai para pos 5 - ferramenta) ===");
+        boolean moved1 = gm.moveCurrentPlayer(4);
+        System.out.println("Moved: " + moved1);
+
+        String msg1 = gm.reactToAbyssOrTool();
+        System.out.println("React: " + msg1);
+        System.out.println("Player 1: " + gm.getProgrammerInfoAsStr(1));
+
+        System.out.println("\n=== TURNO 2: Jogador 2 move 2 ===");
+        gm.moveCurrentPlayer(2);
+        gm.reactToAbyssOrTool();
+
+        System.out.println("\n=== TURNO 3: Jogador 1 move 5 (vai para pos 10 - abismo) ===");
+        boolean moved2 = gm.moveCurrentPlayer(5);
+        System.out.println("Moved: " + moved2);
+
+        String msg2 = gm.reactToAbyssOrTool();
+        System.out.println("React: " + msg2);
+        System.out.println("Player 1: " + gm.getProgrammerInfoAsStr(1));
+
+        String[] info = gm.getProgrammerInfo(1);
+        int pos = Integer.parseInt(info[4]);
+
+        System.out.println("\n=== RESULTADO ===");
+        System.out.println("Posição esperada: 10");
+        System.out.println("Posição obtida: " + pos);
+        System.out.println("Ferramenta anulou? " + msg2.contains("anulado"));
+
+        assertEquals(10, pos, "Jogador deveria estar na posição 10 (ferramenta anulou)");
+    }
+
+    @Test
+    public void test_ExceptionVsTool() {
+        GameManager gm = new GameManager();
+
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", "Purple"},
+                {"2", "Bob", "Python", "Green"}
+        };
+
+        String[][] abyssesAndTools = {
+                {"1", "3", "4"},  // Ferramenta Trat. Excepções na posição 4
+                {"0", "2", "8"}   // Abismo Exception na posição 8
+        };
+
+        gm.createInitialBoard(playerInfo, 15, abyssesAndTools);
+
+        System.out.println("=== TURNO 1: Jogador 1 apanha ferramenta ===");
+        gm.moveCurrentPlayer(3);
+        String msg1 = gm.reactToAbyssOrTool();
+        System.out.println("React: " + msg1);
+        System.out.println("Player 1: " + gm.getProgrammerInfoAsStr(1));
+
+        System.out.println("\n=== TURNO 2: Jogador 2 ===");
+        gm.moveCurrentPlayer(2);
+        gm.reactToAbyssOrTool();
+
+        System.out.println("\n=== TURNO 3: Jogador 1 vai para abismo ===");
+        gm.moveCurrentPlayer(4);
+        String msg2 = gm.reactToAbyssOrTool();
+        System.out.println("React: " + msg2);
+        System.out.println("Player 1: " + gm.getProgrammerInfoAsStr(1));
+
+        String[] info = gm.getProgrammerInfo(1);
+        int pos = Integer.parseInt(info[4]);
+
+        System.out.println("\n=== RESULTADO ===");
+        System.out.println("Posição esperada: 8");
+        System.out.println("Posição obtida: " + pos);
+
+        assertEquals(8, pos, "Jogador deveria estar na posição 8 (ferramenta anulou)");
+    }
+
 
 
 }
