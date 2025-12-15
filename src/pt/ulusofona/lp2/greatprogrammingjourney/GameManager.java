@@ -510,18 +510,11 @@ public class GameManager {
     }
 
     public String reactToAbyssOrTool() {
-        // DEBUG
-        System.out.println("[REACT] Called - pendingReaction: " + pendingReaction + ", gameOver: " + gameOver + ", lastPlayerId: " + lastPlayerId);
-
         if (!pendingReaction || gameOver || lastPlayerId == null) {
             return null;
         }
 
         Programmer current = idToProgrammer.get(lastPlayerId);
-
-        // DEBUG
-        System.out.println("[REACT] Current player: " + (current != null ? current.getName() + " at pos " + current.getPosition() : "null"));
-
         if (current == null) {
             clearPendingState();
             return null;
@@ -530,7 +523,6 @@ public class GameManager {
         // Trata casos especiais (preso, derrotado, movimento inválido)
         String specialCaseResult = handleSpecialCases(current);
         if (specialCaseResult != null) {
-            System.out.println("[REACT] Special case: " + specialCaseResult);
             return specialCaseResult;
         }
 
@@ -544,9 +536,6 @@ public class GameManager {
 
         // Processa abismo na posição
         String abyssMsg = processAbyss(current, pos);
-
-        // DEBUG
-        System.out.println("[REACT] toolMsg: " + toolMsg + ", abyssMsg: " + abyssMsg);
 
         // Verifica vitória
         checkForVictory(current);
@@ -621,10 +610,6 @@ public class GameManager {
     private String processAbyss(Programmer current, int pos) {
         Abyss abyss = abyssesByPosition.get(pos);
 
-        // DEBUG
-        System.out.println("[PROCESS_ABYSS] Position: " + pos);
-        System.out.println("[PROCESS_ABYSS] Abyss: " + (abyss != null ? abyss.getName() + " (ID: " + abyss.getId() + ")" : "null"));
-
         if (abyss == null) {
             return null;
         }
@@ -651,14 +636,6 @@ public class GameManager {
 
     private String handleRegularAbyss(Programmer current, Abyss abyss) {
         Tool canceller = current.findToolToCancelAbyss(abyss.getId());
-
-        // DEBUG CICLO INFINITO
-        if (abyss.getId() == 8) {
-            System.out.println("[CICLO_INFINITO_DEBUG] Abyss: " + abyss.getName());
-            System.out.println("[CICLO_INFINITO_DEBUG] Player: " + current.getName());
-            System.out.println("[CICLO_INFINITO_DEBUG] Player tools: " + current.getToolsInfo());
-            System.out.println("[CICLO_INFINITO_DEBUG] Canceller found: " + (canceller != null ? canceller.getName() : "null"));
-        }
 
         if (canceller != null) {
             current.removeTool(canceller);
@@ -782,6 +759,8 @@ public class GameManager {
 
         int pos = programmer.getPosition();
 
+        // Após Segmentation Fault, o jogador APENAS apanha ferramentas
+        // NÃO ativa abismos
         Tool tool = toolsByPosition.get(pos);
         if (tool != null) {
             if (!programmer.hasToolOfType(tool.getId())) {
@@ -789,30 +768,7 @@ public class GameManager {
             }
         }
 
-        Abyss abyss = abyssesByPosition.get(pos);
-        if (abyss == null) {
-            return;
-        }
-
-        if (abyss.getId() == SegmentationFaultAbyss.ID) {
-            List<Programmer> here = getAlivePlayersAt(pos);
-            if (here.size() >= 2) {
-                applySegmentationFaultToAll(here);
-            }
-            return;
-        }
-
-        Tool canceller = programmer.findToolToCancelAbyss(abyss.getId());
-        if (canceller != null) {
-            programmer.removeTool(canceller);
-            return;
-        }
-
-        abyss.applyEffect(programmer, 0, pos);
-
-        if (programmer.isDefeated()) {
-            removePlayerFromTurnOrder(programmer.getId());
-        }
+        // NÃO processa abismos após movimento forçado por Segmentation Fault
     }
 
     public boolean gameIsOver() {
