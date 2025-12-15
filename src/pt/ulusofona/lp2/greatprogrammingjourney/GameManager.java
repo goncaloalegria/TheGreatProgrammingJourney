@@ -759,8 +759,7 @@ public class GameManager {
 
         int pos = programmer.getPosition();
 
-        // Após Segmentation Fault, o jogador APENAS apanha ferramentas
-        // NÃO ativa abismos
+        // 1. Apanha ferramenta (se houver)
         Tool tool = toolsByPosition.get(pos);
         if (tool != null) {
             if (!programmer.hasToolOfType(tool.getId())) {
@@ -768,7 +767,31 @@ public class GameManager {
             }
         }
 
-        // NÃO processa abismos após movimento forçado por Segmentation Fault
+        // 2. Verifica se há abismo
+        Abyss abyss = abyssesByPosition.get(pos);
+        if (abyss == null) {
+            return;
+        }
+
+        // 3. NÃO aplica outro Segmentation Fault (evita cadeia infinita)
+        if (abyss.getId() == SegmentationFaultAbyss.ID) {
+            return;
+        }
+
+        // 4. Verifica se tem ferramenta que anula
+        Tool canceller = programmer.findToolToCancelAbyss(abyss.getId());
+        if (canceller != null) {
+            programmer.removeTool(canceller);
+            return;
+        }
+
+        // 5. Aplica o efeito do abismo
+        abyss.applyEffect(programmer, 0, pos);
+
+        // 6. Se ficou derrotado, remove do turnOrder
+        if (programmer.isDefeated()) {
+            removePlayerFromTurnOrder(programmer.getId());
+        }
     }
 
     public boolean gameIsOver() {
