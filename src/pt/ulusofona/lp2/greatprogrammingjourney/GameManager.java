@@ -510,11 +510,18 @@ public class GameManager {
     }
 
     public String reactToAbyssOrTool() {
+        // DEBUG
+        System.out.println("[REACT] Called - pendingReaction: " + pendingReaction + ", gameOver: " + gameOver + ", lastPlayerId: " + lastPlayerId);
+
         if (!pendingReaction || gameOver || lastPlayerId == null) {
             return null;
         }
 
         Programmer current = idToProgrammer.get(lastPlayerId);
+
+        // DEBUG
+        System.out.println("[REACT] Current player: " + (current != null ? current.getName() + " at pos " + current.getPosition() : "null"));
+
         if (current == null) {
             clearPendingState();
             return null;
@@ -523,6 +530,7 @@ public class GameManager {
         // Trata casos especiais (preso, derrotado, movimento inválido)
         String specialCaseResult = handleSpecialCases(current);
         if (specialCaseResult != null) {
+            System.out.println("[REACT] Special case: " + specialCaseResult);
             return specialCaseResult;
         }
 
@@ -536,6 +544,9 @@ public class GameManager {
 
         // Processa abismo na posição
         String abyssMsg = processAbyss(current, pos);
+
+        // DEBUG
+        System.out.println("[REACT] toolMsg: " + toolMsg + ", abyssMsg: " + abyssMsg);
 
         // Verifica vitória
         checkForVictory(current);
@@ -609,6 +620,10 @@ public class GameManager {
 
     private String processAbyss(Programmer current, int pos) {
         Abyss abyss = abyssesByPosition.get(pos);
+
+        // DEBUG
+        System.out.println("[PROCESS_ABYSS] Position: " + pos);
+        System.out.println("[PROCESS_ABYSS] Abyss: " + (abyss != null ? abyss.getName() + " (ID: " + abyss.getId() + ")" : "null"));
 
         if (abyss == null) {
             return null;
