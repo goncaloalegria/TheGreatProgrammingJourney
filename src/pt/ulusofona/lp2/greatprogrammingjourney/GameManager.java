@@ -261,6 +261,38 @@ public class GameManager {
         }
     }
 
+    private String normalizeLanguages(String raw) {
+        if (raw == null) {
+            return "";
+        }
+
+        String trimmedAll = raw.trim();
+        if (trimmedAll.isEmpty()) {
+            return "";
+        }
+
+        String[] parts = trimmedAll.split("[;,]");
+        ArrayList<String> langs = new ArrayList<>();
+
+        for (String p : parts) {
+            if (p != null) {
+                String t = p.trim();
+                if (!t.isEmpty()) {
+                    langs.add(t);
+                }
+            }
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < langs.size(); i++) {
+            if (i > 0) {
+                sb.append("; ");
+            }
+            sb.append(langs.get(i));
+        }
+        return sb.toString();
+    }
+
     public String getImagePng(int position) {
         if (position < 1 || position > boardSize) {
             return null;
@@ -283,20 +315,41 @@ public class GameManager {
         return null;
     }
 
+    // ✅ ORDEM CORRETA (7 elementos):
+    // 0 ID, 1 Nome, 2 Linguagens, 3 Cor, 4 Posição, 5 Ferramentas, 6 Estado
     public String[] getProgrammerInfo(int id) {
         Programmer programmer = idToProgrammer.get(id);
         if (programmer == null) {
             return null;
         }
-        return programmer.getInfoAsArray();
+
+        String idStr = String.valueOf(programmer.getId());
+        String name = programmer.getName();
+        String languages = normalizeLanguages(programmer.getLanguages());
+        String color = programmer.getColor();
+        String position = String.valueOf(programmer.getPosition());
+        String tools = programmer.getToolsInfo();
+        String state = programmer.getState();
+
+        return new String[]{idStr, name, languages, color, position, tools, state};
     }
 
+    // ✅ Formato esperado:
+    // id | name | position | toolsInfo | languages | state
     public String getProgrammerInfoAsStr(int id) {
         Programmer programmer = idToProgrammer.get(id);
         if (programmer == null) {
             return null;
         }
-        return programmer.getInfoAsString();
+
+        String idStr = String.valueOf(programmer.getId());
+        String name = programmer.getName();
+        String position = String.valueOf(programmer.getPosition());
+        String tools = programmer.getToolsInfo();
+        String languages = normalizeLanguages(programmer.getLanguages());
+        String state = programmer.getState();
+
+        return idStr + " | " + name + " | " + position + " | " + tools + " | " + languages + " | " + state;
     }
 
     public String getProgrammersInfo() {
@@ -376,11 +429,7 @@ public class GameManager {
     }
 
     public String[] getCurrentPlayerInfo() {
-        Programmer p = idToProgrammer.get(getCurrentPlayerID());
-        if (p == null) {
-            return null;
-        }
-        return p.getInfoAsArray();
+        return getProgrammerInfo(getCurrentPlayerID());
     }
 
     public int getLastDiceValue() {
@@ -493,14 +542,10 @@ public class GameManager {
     private int calculateNewPosition(int from, int nrPositions) {
         int to = from + nrPositions;
 
-        // Se ultrapassar a meta, calcula o bounce-back
         if (to > boardSize) {
-            // Calcula quanto ultrapassou
             int overshoot = to - boardSize;
-            // Volta para trás a partir da meta
             to = boardSize - overshoot;
 
-            // Se o bounce-back levar a posição < 1, fica na posição 1
             if (to < 1) {
                 to = 1;
             }
@@ -545,7 +590,6 @@ public class GameManager {
 
         clearPendingState();
 
-        // Retorna mensagem apropriada
         return determineReturnMessage(abyssMsg, toolMsg);
     }
 
@@ -556,7 +600,7 @@ public class GameManager {
 
     private String handleSpecialCases(Programmer current) {
         if (pendingReason == PENDING_REASON_TRAPPED) {
-            return handleTrappedPlayer(current);
+            return handleTrappedPlayer();
         }
 
         if (pendingReason == PENDING_REASON_DEFEATED) {
@@ -576,10 +620,9 @@ public class GameManager {
         return null;
     }
 
-    private String handleTrappedPlayer(Programmer current) {
+    // ✅ NÃO libertar automaticamente o preso
+    private String handleTrappedPlayer() {
         clearPendingState();
-        // Liberta o jogador AGORA (após perder a vez)
-        current.setState("Em Jogo");
         turnCount++;
         advanceTurnCursor();
         return "Ciclo Infinito!";
@@ -591,6 +634,7 @@ public class GameManager {
         this.lastToolCollected = null;
     }
 
+    // ✅ Remove a tool do tabuleiro apenas quando alguém a apanha (e não a tinha)
     private String processTool(Programmer current, int pos) {
         Tool boardTool = toolsByPosition.get(pos);
 
@@ -601,6 +645,9 @@ public class GameManager {
         if (!current.hasToolOfType(boardTool.getId())) {
             current.addTool(boardTool);
             this.lastToolCollected = boardTool;
+
+            toolsByPosition.remove(pos);
+
             return "Recolheu ferramenta: " + boardTool.getName();
         } else {
             return "Já possui a ferramenta: " + boardTool.getName();
@@ -620,7 +667,6 @@ public class GameManager {
             return handleSegmentationFault(pos, abyss);
         }
 
-        // Todos os outros abismos (incluindo Ciclo Infinito) vão para handleRegularAbyss
         return handleRegularAbyss(current, abyss);
     }
 
@@ -630,7 +676,6 @@ public class GameManager {
             applySegmentationFaultToAll(here);
             return abyss.getName() + "!";
         }
-        // Mesmo sem ativar, retorna mensagem (abismo existe na posição)
         return abyss.getName() + "!";
     }
 
@@ -710,7 +755,6 @@ public class GameManager {
             return;
         }
 
-        // Se removemos alguém ANTES ou NO cursor, ajusta o cursor
         if (idx <= turnCursor) {
             turnCursor--;
         }
@@ -759,36 +803,31 @@ public class GameManager {
 
         int pos = programmer.getPosition();
 
-        // 1. Apanha ferramenta (se houver)
         Tool tool = toolsByPosition.get(pos);
         if (tool != null) {
             if (!programmer.hasToolOfType(tool.getId())) {
                 programmer.addTool(tool);
+                toolsByPosition.remove(pos);
             }
         }
 
-        // 2. Verifica se há abismo
         Abyss abyss = abyssesByPosition.get(pos);
         if (abyss == null) {
             return;
         }
 
-        // 3. NÃO aplica outro Segmentation Fault (evita cadeia infinita)
         if (abyss.getId() == SegmentationFaultAbyss.ID) {
             return;
         }
 
-        // 4. Verifica se tem ferramenta que anula
         Tool canceller = programmer.findToolToCancelAbyss(abyss.getId());
         if (canceller != null) {
             programmer.removeTool(canceller);
             return;
         }
 
-        // 5. Aplica o efeito do abismo
         abyss.applyEffect(programmer, 0, pos);
 
-        // 6. Se ficou derrotado, remove do turnOrder
         if (programmer.isDefeated()) {
             removePlayerFromTurnOrder(programmer.getId());
         }
