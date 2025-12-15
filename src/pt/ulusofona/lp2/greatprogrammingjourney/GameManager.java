@@ -473,7 +473,7 @@ public class GameManager {
             return false;
         }
 
-        // Se estÃ¡ derrotado mas ainda aparece (seguranÃ§a)
+        // Se está derrotado mas ainda aparece (segurança)
         if (current.isDefeated()) {
             setLastMoveNoChange(currentId, current.getPosition(), nrPositions);
             this.pendingReaction = true;
@@ -481,12 +481,22 @@ public class GameManager {
             return false;
         }
 
-        // Se está preso: não joga, turno avança diretamente
+        // Se está preso: verificar se tem ferramenta para se libertar
         if (current.isTrapped()) {
-            turnCount++;
-            advanceTurnCursor();
-            // NÃO define pendingReaction - react não é necessário
-            return false;  // Jogador preso não pode mover
+            // Verificar se tem ferramenta que anula Ciclo Infinito (abismo ID 8)
+            Tool liberator = current.findToolToCancelAbyss(InfiniteLoopAbyss.ID);
+            if (liberator != null) {
+                // Tem ferramenta! Liberta-se e usa a ferramenta
+                current.removeTool(liberator);
+                current.setState("Em Jogo");
+                // Continua o movimento normalmente (não retorna aqui)
+            } else {
+                // Não tem ferramenta, fica preso
+                setLastMoveNoChange(currentId, current.getPosition(), nrPositions);
+                this.pendingReaction = true;
+                this.pendingReason = PENDING_REASON_TRAPPED;
+                return false;
+            }
         }
 
         // RestriÃ§Ãµes por linguagem
@@ -599,7 +609,13 @@ public class GameManager {
     }
 
     private String handleSpecialCases(Programmer current) {
-        // Caso preso agora é tratado diretamente no moveCurrentPlayer
+        // Jogador preso sem ferramenta
+        if (pendingReason == PENDING_REASON_TRAPPED) {
+            clearPendingState();
+            turnCount++;
+            advanceTurnCursor();
+            return "Ciclo Infinito!";
+        }
 
         if (pendingReason == PENDING_REASON_DEFEATED) {
             clearPendingState();
