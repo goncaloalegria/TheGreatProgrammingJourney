@@ -27,13 +27,13 @@ public class GameManager {
     private Integer winnerId;
     private int turnCount;
 
-    // Abysses e Tools por posição
+    // Abysses e Tools por posiÃ§Ã£o
     private HashMap<Integer, Abyss> abyssesByPosition;
     private HashMap<Integer, Tool> toolsByPosition;
 
     private Random random;
 
-    // --- Info da última jogada ---
+    // --- Info da Ãºltima jogada ---
     private int lastDiceValue = 0;
     private Integer lastPlayerId = null;
     private int lastFromPosition = 0;
@@ -42,10 +42,10 @@ public class GameManager {
     private Tool lastToolUsed = null;
     private Tool lastToolCollected = null;
 
-    // Se o turno do jogador atual foi "consumido" e está à espera de reação
+    // Se o turno do jogador atual foi "consumido" e estÃ¡ Ã  espera de reaÃ§Ã£o
     private boolean pendingReaction = false;
 
-    // Razões para moveCurrentPlayer devolver false mas o turno avançar via react
+    // RazÃµes para moveCurrentPlayer devolver false mas o turno avanÃ§ar via react
     private int pendingReason = 0;
     private static final int PENDING_REASON_NONE = 0;
     private static final int PENDING_REASON_TRAPPED = 1;
@@ -111,7 +111,7 @@ public class GameManager {
         this.gameOver = false;
         this.winnerId = null;
 
-        // TurnCount: começa no turno 1
+        // TurnCount: comeÃ§a no turno 1
         this.turnCount = 1;
 
         this.lastDiceValue = 0;
@@ -315,8 +315,8 @@ public class GameManager {
         return null;
     }
 
-    // ✅ ORDEM CORRETA (7 elementos):
-    // 0 ID, 1 Nome, 2 Linguagens, 3 Cor, 4 Posição, 5 Ferramentas, 6 Estado
+    // âœ… ORDEM CORRETA (7 elementos):
+    // 0 ID, 1 Nome, 2 Linguagens, 3 Cor, 4 PosiÃ§Ã£o, 5 Ferramentas, 6 Estado
     public String[] getProgrammerInfo(int id) {
         Programmer programmer = idToProgrammer.get(id);
         if (programmer == null) {
@@ -328,13 +328,13 @@ public class GameManager {
         String languages = normalizeLanguages(programmer.getLanguages());
         String color = programmer.getColor();
         String position = String.valueOf(programmer.getPosition());
-        String tools = programmer.getToolsInfo();
         String state = programmer.getState();
+        String tools = programmer.getToolsInfo();
 
-        return new String[]{idStr, name, languages, color, position, tools, state};
+        return new String[]{idStr, name, languages, color, position, state, tools};
     }
 
-    // ✅ Formato esperado:
+    // âœ… Formato esperado:
     // id | name | position | toolsInfo | languages | state
     public String getProgrammerInfoAsStr(int id) {
         Programmer programmer = idToProgrammer.get(id);
@@ -445,12 +445,12 @@ public class GameManager {
 
     /**
      * moveCurrentPlayer:
-     * - NÃO avança turnCursor (isso é no react)
+     * - NÃƒO avanÃ§a turnCursor (isso Ã© no react)
      * - Se o jogador estiver Preso/Derrotado: devolve false e deixa pendingReason
      * - Bounce-back ao ultrapassar a meta
-     * - Restrições por linguagem:
+     * - RestriÃ§Ãµes por linguagem:
      *   Assembly: max 2
-     *   C: max 3  (C# NÃO conta como C)
+     *   C: max 3  (C# NÃƒO conta como C)
      */
     public boolean moveCurrentPlayer(int nrPositions) {
         if (gameOver) {
@@ -463,7 +463,7 @@ public class GameManager {
             return false;
         }
 
-        // Reset pendências anteriores
+        // Reset pendÃªncias anteriores
         this.pendingReaction = false;
         this.pendingReason = PENDING_REASON_NONE;
 
@@ -473,7 +473,7 @@ public class GameManager {
             return false;
         }
 
-        // Se está derrotado mas ainda aparece (segurança)
+        // Se estÃ¡ derrotado mas ainda aparece (seguranÃ§a)
         if (current.isDefeated()) {
             setLastMoveNoChange(currentId, current.getPosition(), nrPositions);
             this.pendingReaction = true;
@@ -481,15 +481,15 @@ public class GameManager {
             return false;
         }
 
-        // Se está preso: não joga, mas o avanço do turno acontece em react
+        // Se está preso: aceita o movimento mas não faz nada, react vai saltar o turno
         if (current.isTrapped()) {
             setLastMoveNoChange(currentId, current.getPosition(), nrPositions);
             this.pendingReaction = true;
             this.pendingReason = PENDING_REASON_TRAPPED;
-            return false;
+            return true;  // Aceita o movimento, react vai tratar
         }
 
-        // Restrições por linguagem
+        // RestriÃ§Ãµes por linguagem
         String firstLang = current.getFirstLanguage();
         if (firstLang != null) {
             if (firstLang.equalsIgnoreCase("Assembly") && nrPositions > 2) {
@@ -538,7 +538,7 @@ public class GameManager {
         this.lastToolCollected = null;
     }
 
-    // Bounce-back: se passar da meta, o jogador "bate" e volta para trás
+    // Bounce-back: se passar da meta, o jogador "bate" e volta para trÃ¡s
     private int calculateNewPosition(int from, int nrPositions) {
         int to = from + nrPositions;
 
@@ -565,7 +565,7 @@ public class GameManager {
             return null;
         }
 
-        // Trata casos especiais (preso, derrotado, movimento inválido)
+        // Trata casos especiais (preso, derrotado, movimento invÃ¡lido)
         String specialCaseResult = handleSpecialCases(current);
         if (specialCaseResult != null) {
             return specialCaseResult;
@@ -576,16 +576,16 @@ public class GameManager {
 
         int pos = current.getPosition();
 
-        // Processa ferramenta na posição
+        // Processa ferramenta na posiÃ§Ã£o
         String toolMsg = processTool(current, pos);
 
-        // Processa abismo na posição
+        // Processa abismo na posiÃ§Ã£o
         String abyssMsg = processAbyss(current, pos);
 
-        // Verifica vitória
+        // Verifica vitÃ³ria
         checkForVictory(current);
 
-        // Avança turno se necessário
+        // AvanÃ§a turno se necessÃ¡rio
         advanceTurnIfNeeded(pos);
 
         clearPendingState();
@@ -620,7 +620,7 @@ public class GameManager {
         return null;
     }
 
-    // ✅ NÃO libertar automaticamente o preso
+    // âœ… NÃƒO libertar automaticamente o preso
     private String handleTrappedPlayer() {
         clearPendingState();
         turnCount++;
@@ -634,7 +634,7 @@ public class GameManager {
         this.lastToolCollected = null;
     }
 
-    // ✅ Remove a tool do tabuleiro apenas quando alguém a apanha (e não a tinha)
+    // âœ… Remove a tool do tabuleiro apenas quando alguÃ©m a apanha (e nÃ£o a tinha)
     private String processTool(Programmer current, int pos) {
         Tool boardTool = toolsByPosition.get(pos);
 
@@ -643,11 +643,12 @@ public class GameManager {
         }
 
         if (!current.hasToolOfType(boardTool.getId())) {
-            current.addTool(boardTool);
-            this.lastToolCollected = boardTool;
+            // Criar uma nova instância da ferramenta para o jogador
+            Tool newTool = createTool(boardTool.getId(), pos);
+            current.addTool(newTool);
+            this.lastToolCollected = newTool;
 
-            toolsByPosition.remove(pos);
-
+            // Ferramenta PERMANECE no tabuleiro - pode ser apanhada por todos
             return "Recolheu ferramenta: " + boardTool.getName();
         } else {
             return "Já possui a ferramenta: " + boardTool.getName();
@@ -806,8 +807,10 @@ public class GameManager {
         Tool tool = toolsByPosition.get(pos);
         if (tool != null) {
             if (!programmer.hasToolOfType(tool.getId())) {
-                programmer.addTool(tool);
-                toolsByPosition.remove(pos);
+                // Criar nova instância da ferramenta
+                Tool newTool = createTool(tool.getId(), pos);
+                programmer.addTool(newTool);
+                // Ferramenta permanece no tabuleiro
             }
         }
 
@@ -1108,13 +1111,13 @@ public class GameManager {
         } catch (InvalidFileException e) {
             throw e;
         } catch (Exception e) {
-            throw new InvalidFileException("Formato de ficheiro inválido");
+            throw new InvalidFileException("Formato de ficheiro invÃ¡lido");
         }
     }
 
     private void validateLoadFile(File file) throws FileNotFoundException {
         if (file == null || !file.exists() || !file.isFile()) {
-            throw new FileNotFoundException("Ficheiro não encontrado");
+            throw new FileNotFoundException("Ficheiro nÃ£o encontrado");
         }
     }
 
@@ -1142,7 +1145,7 @@ public class GameManager {
             String line = scanner.nextLine();
             String[] parts = line.split("\\|", -1);
             if (parts.length < 6) {
-                throw new InvalidFileException("Linha de programador inválida: " + line);
+                throw new InvalidFileException("Linha de programador invÃ¡lida: " + line);
             }
 
             int id = Integer.parseInt(parts[0]);
@@ -1190,7 +1193,7 @@ public class GameManager {
             String line = scanner.nextLine();
             String[] parts = line.split("\\|", -1);
             if (parts.length < 2) {
-                throw new InvalidFileException("Linha de abismo inválida: " + line);
+                throw new InvalidFileException("Linha de abismo invÃ¡lida: " + line);
             }
 
             int abyssId = Integer.parseInt(parts[0]);
@@ -1219,7 +1222,7 @@ public class GameManager {
             String line = scanner.nextLine();
             String[] parts = line.split("\\|", -1);
             if (parts.length < 2) {
-                throw new InvalidFileException("Linha de ferramenta inválida: " + line);
+                throw new InvalidFileException("Linha de ferramenta invÃ¡lida: " + line);
             }
 
             int toolId = Integer.parseInt(parts[0]);
