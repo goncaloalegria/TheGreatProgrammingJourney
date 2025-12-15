@@ -230,10 +230,11 @@ public class Programmer {
         return new String[]{
                 String.valueOf(id),        // [0] id
                 name,                       // [1] name
-                String.valueOf(position),   // [2] position
-                getToolsInfo(),             // [3] toolsInfo
-                getOrderedLanguages(),      // [4] orderedLanguages
-                state                       // [5] state
+                getOrderedLanguages(),      // [2] orderedLanguages
+                color,                      // [3] color
+                String.valueOf(position),   // [4] position
+                state,                      // [5] state
+                getToolsInfo()              // [6] toolsInfo (Parte 2)
         };
     }
 
