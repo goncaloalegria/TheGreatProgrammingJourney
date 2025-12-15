@@ -315,8 +315,8 @@ public class GameManager {
         return null;
     }
 
-    // âœ… ORDEM CORRETA (7 elementos):
-    // 0 ID, 1 Nome, 2 Linguagens, 3 Cor, 4 PosiÃ§Ã£o, 5 Ferramentas, 6 Estado
+    // ORDEM (7 elementos):
+    // 0 ID, 1 Nome, 2 Linguagens, 3 Cor, 4 Posição, 5 Ferramentas, 6 Estado
     public String[] getProgrammerInfo(int id) {
         Programmer programmer = idToProgrammer.get(id);
         if (programmer == null) {
@@ -328,14 +328,14 @@ public class GameManager {
         String languages = normalizeLanguages(programmer.getLanguages());
         String color = programmer.getColor();
         String position = String.valueOf(programmer.getPosition());
-        String state = programmer.getState();
         String tools = programmer.getToolsInfo();
+        String state = programmer.getState();
 
-        return new String[]{idStr, name, languages, color, position, state, tools};
+        return new String[]{idStr, name, languages, color, position, tools, state};
     }
 
-    // âœ… Formato esperado:
-    // id | name | position | toolsInfo | languages | state
+    // Formato esperado:
+    // id | name | position | toolsInfo | languages (ordenadas) | state
     public String getProgrammerInfoAsStr(int id) {
         Programmer programmer = idToProgrammer.get(id);
         if (programmer == null) {
@@ -346,7 +346,7 @@ public class GameManager {
         String name = programmer.getName();
         String position = String.valueOf(programmer.getPosition());
         String tools = programmer.getToolsInfo();
-        String languages = normalizeLanguages(programmer.getLanguages());
+        String languages = programmer.getOrderedLanguages();  // Ordenadas!
         String state = programmer.getState();
 
         return idStr + " | " + name + " | " + position + " | " + tools + " | " + languages + " | " + state;
@@ -481,12 +481,12 @@ public class GameManager {
             return false;
         }
 
-        // Se está preso: aceita o movimento mas não faz nada, react vai saltar o turno
+        // Se está preso: não joga, turno avança diretamente
         if (current.isTrapped()) {
-            setLastMoveNoChange(currentId, current.getPosition(), nrPositions);
-            this.pendingReaction = true;
-            this.pendingReason = PENDING_REASON_TRAPPED;
-            return true;  // Aceita o movimento, react vai tratar
+            turnCount++;
+            advanceTurnCursor();
+            // NÃO define pendingReaction - react não é necessário
+            return false;  // Jogador preso não pode mover
         }
 
         // RestriÃ§Ãµes por linguagem
@@ -599,9 +599,7 @@ public class GameManager {
     }
 
     private String handleSpecialCases(Programmer current) {
-        if (pendingReason == PENDING_REASON_TRAPPED) {
-            return handleTrappedPlayer();
-        }
+        // Caso preso agora é tratado diretamente no moveCurrentPlayer
 
         if (pendingReason == PENDING_REASON_DEFEATED) {
             clearPendingState();
@@ -618,14 +616,6 @@ public class GameManager {
         }
 
         return null;
-    }
-
-    // âœ… NÃƒO libertar automaticamente o preso
-    private String handleTrappedPlayer() {
-        clearPendingState();
-        turnCount++;
-        advanceTurnCursor();
-        return "Ciclo Infinito!";
     }
 
     private void resetLastActionInfo() {
