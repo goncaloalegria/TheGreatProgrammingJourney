@@ -42,7 +42,7 @@ public class GameManager {
     private Tool lastToolUsed = null;
     private Tool lastToolCollected = null;
 
-    // Se o turno do jogador atual foi "consumido" e estÃ¡ Ã  espera de reaÃ§Ã£o
+    // Se o turno do jogador atual foi "consumido" e estÃ¡ Ã  espera de reaÃ§Ã£o
     private boolean pendingReaction = false;
 
     // RazÃµes para moveCurrentPlayer devolver false mas o turno avanÃ§ar via react
@@ -481,19 +481,12 @@ public class GameManager {
             return false;
         }
 
-        // Se está preso: verificar se tem ferramenta para se libertar
+        // Se está preso: não pode mover, mas react deve retornar mensagem
         if (current.isTrapped()) {
-            // Verificar se tem ferramenta que anula Ciclo Infinito (abismo ID 8)
-            Tool liberator = current.findToolToCancelAbyss(InfiniteLoopAbyss.ID);
-            if (liberator != null) {
-                // Tem ferramenta! Liberta-se e usa a ferramenta
-                current.removeTool(liberator);
-                current.setState("Em Jogo");
-                // Continua o movimento normalmente (não retorna aqui)
-            } else {
-                // Não tem ferramenta - não pode mover
-                return false;
-            }
+            setLastMoveNoChange(currentId, current.getPosition(), nrPositions);
+            this.pendingReaction = true;
+            this.pendingReason = PENDING_REASON_TRAPPED;
+            return false;
         }
 
         // Restrições por linguagem
@@ -608,6 +601,14 @@ public class GameManager {
     }
 
     private String handleSpecialCases(Programmer current) {
+        // Jogador preso - retorna mensagem do abismo e avança turno
+        if (pendingReason == PENDING_REASON_TRAPPED) {
+            clearPendingState();
+            turnCount++;
+            advanceTurnCursor();
+            return "Ciclo Infinito!";
+        }
+
         if (pendingReason == PENDING_REASON_DEFEATED) {
             clearPendingState();
             turnCount++;
