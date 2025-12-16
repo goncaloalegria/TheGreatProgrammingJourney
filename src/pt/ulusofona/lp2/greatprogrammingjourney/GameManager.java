@@ -603,7 +603,6 @@ public class GameManager {
     private String handleSpecialCases(Programmer current) {
         // Jogador preso - retorna mensagem do abismo e avança turno
         if (pendingReason == PENDING_REASON_TRAPPED) {
-            current.setState("Em Jogo"); // <--- CORREÇÃO AQUI: Liberta o jogador
             clearPendingState();
             turnCount++;
             advanceTurnCursor();
