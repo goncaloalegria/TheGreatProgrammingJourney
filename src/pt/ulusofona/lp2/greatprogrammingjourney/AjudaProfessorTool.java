@@ -1,14 +1,11 @@
 package pt.ulusofona.lp2.greatprogrammingjourney;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
  * Ferramenta Ajuda Do Professor (ID 5)
- * Anula os abismos relacionados a dificuldades de aprendizagem:
- * - Abismo 3 (FileNotFoundException)
- * - Abismo 8 (Ciclo Infinito)
+ * Esta ferramenta não cancela nenhum abismo diretamente.
  */
 public class AjudaProfessorTool extends Tool {
 
@@ -16,9 +13,8 @@ public class AjudaProfessorTool extends Tool {
     private static final String NAME = "Ajuda Do Professor";
     private static final String IMAGE_NAME = "ajuda-professor.png";
 
-    // IDs dos abismos que esta ferramenta pode anular
-    private static final Set<Integer> CANCELLABLE_ABYSSES =
-            new HashSet<>(Arrays.asList(3, 8));
+    // Esta ferramenta não cancela abismos
+    private static final Set<Integer> CANCELLABLE_ABYSSES = new HashSet<>();
 
     public AjudaProfessorTool(int position) {
         super(ID, NAME, position);

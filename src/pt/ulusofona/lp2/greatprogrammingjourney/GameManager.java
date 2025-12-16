@@ -481,21 +481,9 @@ public class GameManager {
             return false;
         }
 
-        // Se está preso: verificar se tem ferramenta para se libertar
+        // Se está preso: não pode mover, retorna false
         if (current.isTrapped()) {
-            // Verificar se tem ferramenta que anula Ciclo Infinito (abismo ID 8)
-            Tool liberator = current.findToolToCancelAbyss(InfiniteLoopAbyss.ID);
-            if (liberator != null) {
-                // Tem ferramenta! Liberta-se e usa a ferramenta
-                current.removeTool(liberator);
-                current.setState("Em Jogo");
-                // Continua o movimento normalmente
-            } else {
-                // Não tem ferramenta - turno é saltado
-                turnCount++;
-                advanceTurnCursor();
-                return false;
-            }
+            return false;
         }
 
         // Restrições por linguagem

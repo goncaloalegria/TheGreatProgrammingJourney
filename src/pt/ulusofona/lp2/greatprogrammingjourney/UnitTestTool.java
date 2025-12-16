@@ -6,9 +6,8 @@ import java.util.Set;
 
 /**
  * Ferramenta Testes Unitários (ID 2)
- * Anula os abismos que causam erros de execução ou problemas de qualidade:
- * - Abismo 3 (FileNotFoundException)
- * - Abismo 7 (Blue Screen of Death)
+ * Anula os abismos:
+ * - Abismo 1 (Erro de Lógica)
  */
 public class UnitTestTool extends Tool {
 
@@ -18,7 +17,7 @@ public class UnitTestTool extends Tool {
 
     // IDs dos abismos que esta ferramenta pode anular
     private static final Set<Integer> CANCELLABLE_ABYSSES =
-            new HashSet<>(Arrays.asList(3, 7));
+            new HashSet<>(Arrays.asList(1));
 
     public UnitTestTool(int position) {
         super(ID, NAME, position);

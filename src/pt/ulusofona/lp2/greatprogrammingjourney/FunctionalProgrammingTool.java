@@ -6,10 +6,10 @@ import java.util.Set;
 
 /**
  * Ferramenta Programação Funcional (ID 1)
- * Anula os abismos relacionados a mudanças de estado ou lógica complexa:
- * - Abismo 1 (Erro de Lógica)
- * - Abismo 2 (Exception)
+ * Anula os abismos:
+ * - Abismo 5 (Código Duplicado)
  * - Abismo 6 (Efeitos Secundários)
+ * - Abismo 8 (Ciclo Infinito)
  */
 public class FunctionalProgrammingTool extends Tool {
 
@@ -19,7 +19,7 @@ public class FunctionalProgrammingTool extends Tool {
 
     // IDs dos abismos que esta ferramenta pode anular
     private static final Set<Integer> CANCELLABLE_ABYSSES =
-            new HashSet<>(Arrays.asList(1, 2, 6));
+            new HashSet<>(Arrays.asList(5, 6, 8));
 
     public FunctionalProgrammingTool(int position) {
         super(ID, NAME, position);

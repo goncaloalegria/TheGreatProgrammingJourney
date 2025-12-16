@@ -6,9 +6,8 @@ import java.util.Set;
 
 /**
  * Ferramenta IDE (ID 4)
- * Anula os abismos relacionados a erros de programação:
- * - Abismo 1 (Erro de Lógica)
- * - Abismo 5 (Código Duplicado)
+ * Anula os abismos:
+ * - Abismo 0 (Erro de Sintaxe)
  */
 public class IdeTool extends Tool {
 
@@ -18,7 +17,7 @@ public class IdeTool extends Tool {
 
     // IDs dos abismos que esta ferramenta pode anular
     private static final Set<Integer> CANCELLABLE_ABYSSES =
-            new HashSet<>(Arrays.asList(0, 1, 5));
+            new HashSet<>(Arrays.asList(0));
 
     public IdeTool(int position) {
         super(ID, NAME, position);
