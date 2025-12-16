@@ -3,9 +3,13 @@ package pt.ulusofona.lp2.greatprogrammingjourney;
 /**
  * Abismo Ciclo Infinito (ID 8)
  * Efeito: O jogador fica "Preso" na casa.
- * - Enquanto preso, o turno do jogador Ã© saltado
- * - SÃ³ se liberta se tiver a ferramenta "Ajuda do Professor" ao cair
- * - Se outro jogador sem ferramenta cair na mesma casa, tambÃ©m fica preso
+ * - Enquanto preso, o jogador não pode mover-se nos turnos seguintes
+ * - Se outro jogador cair na mesma casa:
+ *   - O jogador preso é libertado (volta a "Em Jogo")
+ *   - O novo jogador fica preso no seu lugar
+ *   - EXCETO se o novo jogador tiver ferramenta aplicável:
+ *     - Nesse caso o novo jogador NÃO fica preso
+ *     - E o jogador que lá estava também NÃO é libertado
  */
 public class InfiniteLoopAbyss extends Abyss {
 
@@ -34,7 +38,7 @@ public class InfiniteLoopAbyss extends Abyss {
 
     @Override
     public boolean forcesRepeatTurn() {
-        // NÃ£o repete turno - o jogador fica preso e os turnos sÃ£o saltados
+        // Não repete turno - o jogador fica preso e os turnos são saltados
         return false;
     }
 }
