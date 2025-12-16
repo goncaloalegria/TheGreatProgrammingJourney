@@ -7,6 +7,54 @@ public class TestGameManager {
 
 
     @Test
+    public void testCompleteScenario() {
+        GameManager gm = new GameManager();
+
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", "Purple"},
+                {"2", "Bob", "Python", "Green"}
+        };
+
+        // Ferramenta Prog. Funcional (ID 1) na posição 5
+        // Abismo Erro Lógica (ID 1) na posição 10
+        String[][] abyssesAndTools = {
+                {"1", "1", "5"},
+                {"0", "1", "10"}
+        };
+
+        gm.createInitialBoard(playerInfo, 15, abyssesAndTools);
+
+        System.out.println("=== TURNO 1: Jogador 1 vai para posição 5 ===");
+        boolean m1 = gm.moveCurrentPlayer(4);
+        System.out.println("move: " + m1);
+        String r1 = gm.reactToAbyssOrTool();
+        System.out.println("react: " + r1);
+        String[] info1 = gm.getProgrammerInfo(1);
+        System.out.println("Ferramentas: " + info1[5]);
+        System.out.println("Posição: " + info1[4]);
+
+        System.out.println("\n=== TURNO 2: Jogador 2 move ===");
+        gm.moveCurrentPlayer(2);
+        gm.reactToAbyssOrTool();
+
+        System.out.println("\n=== TURNO 3: Jogador 1 vai para posição 10 (abismo) ===");
+        boolean m3 = gm.moveCurrentPlayer(5);
+        System.out.println("move: " + m3);
+        String r3 = gm.reactToAbyssOrTool();
+        System.out.println("react: " + r3);
+        String[] info3 = gm.getProgrammerInfo(1);
+        System.out.println("Ferramentas: " + info3[5]);
+        System.out.println("Posição: " + info3[4] + " (esperado: 10)");
+        System.out.println("Estado: " + info3[6]);
+
+        // Verificações
+        System.out.println("\n=== VERIFICAÇÕES ===");
+        System.out.println("Posição é 10? " + info3[4].equals("10"));
+        System.out.println("Ferramentas é 'No tools'? " + info3[5].equals("No tools"));
+        System.out.println("React contém 'anulado'? " + (r3 != null && r3.contains("anulado")));
+    }
+
+    @Test
     public void testCicloInfinitoExact() {
         GameManager gm = new GameManager();
 
