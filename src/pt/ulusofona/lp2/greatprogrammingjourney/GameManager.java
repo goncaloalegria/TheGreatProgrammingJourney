@@ -197,7 +197,7 @@ public class GameManager {
             }
 
             if (tipo == 0) {
-                if (id < 0 || id > 9) {
+                if (id < 0 || id > 10) {
                     return false;
                 }
             } else {
@@ -962,7 +962,9 @@ public class GameManager {
     }
 
     public HashMap<String, String> customizeBoard() {
-        return new HashMap<>();
+        HashMap<String, String> customizations = new HashMap<>();
+        customizations.put("hasNewAbyss", "true");
+        return customizations;
     }
 
     public void addAbyss(Abyss abyss) {
@@ -1010,6 +1012,9 @@ public class GameManager {
             }
             case 9: {
                 return new SegmentationFaultAbyss(position);
+            }
+            case 10: {
+                return new StackOverflowAbyss(position);
             }
             default: {
                 return null;
