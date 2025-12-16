@@ -481,12 +481,13 @@ public class GameManager {
             return false;
         }
 
-        // Se está preso: não pode mover, mas react deve retornar mensagem
+        // Se está preso: aceita o movimento mas não avança
+        // O react vai lidar com retornar a mensagem e avançar o turno
         if (current.isTrapped()) {
             setLastMoveNoChange(currentId, current.getPosition(), nrPositions);
             this.pendingReaction = true;
             this.pendingReason = PENDING_REASON_TRAPPED;
-            return false;
+            return true;  // Retorna true, mas jogador não se move
         }
 
         // Restrições por linguagem
