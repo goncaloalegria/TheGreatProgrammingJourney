@@ -481,31 +481,18 @@ public class GameManager {
             return false;
         }
 
-        // Se está preso: verificar se tem ferramenta para se libertar
+        // Se está preso: turno é saltado (só se liberta se tiver ferramenta AO CAIR)
         if (current.isTrapped()) {
-            // Verificar se tem ferramenta que anula Ciclo Infinito (abismo ID 8)
-            Tool liberator = current.findToolToCancelAbyss(InfiniteLoopAbyss.ID);
-            if (liberator != null) {
-                // Tem ferramenta! Liberta-se e usa a ferramenta
-                current.removeTool(liberator);
-                current.setState("Em Jogo");
-                // Continua o movimento normalmente (não retorna aqui)
-            } else {
-                // Não tem ferramenta, fica preso - mas retorna true
-                // O react vai lidar com avançar o turno
-                setLastMoveNoChange(currentId, current.getPosition(), nrPositions);
-                this.pendingReaction = true;
-                this.pendingReason = PENDING_REASON_TRAPPED;
-                return true;  // Retorna true, react lida com o resto
-            }
+            // Jogador preso não pode mover - turno é saltado
+            turnCount++;
+            advanceTurnCursor();
+            return false;
         }
 
-        // Restrições por linguagem DESATIVADAS para debug
-        // NOTA: C# e C++ NÃO contam como C (apenas "C" exato)
-        /*
+        // Restrições por linguagem
+        // Assembly: máximo 2 casas, C (exatamente): máximo 3 casas
         String firstLang = current.getFirstLanguage();
         if (firstLang != null) {
-            // Assembly: máximo 2 casas
             if (firstLang.equalsIgnoreCase("Assembly") && nrPositions > 2) {
                 setLastMoveNoChange(currentId, current.getPosition(), nrPositions);
                 this.pendingReaction = true;
@@ -513,15 +500,14 @@ public class GameManager {
                 return false;
             }
 
-            // C (apenas "C" ou "c", não "C++" nem "C#"): máximo 3 casas
-            if ((firstLang.equals("C") || firstLang.equals("c")) && nrPositions > 3) {
+            // C (apenas "C" exato, não "C++" nem "C#")
+            if (firstLang.equalsIgnoreCase("C") && nrPositions > 3) {
                 setLastMoveNoChange(currentId, current.getPosition(), nrPositions);
                 this.pendingReaction = true;
                 this.pendingReason = PENDING_REASON_INVALID_MOVE;
                 return false;
             }
         }
-        */
 
         // Movimento normal com bounce-back
         this.lastDiceValue = nrPositions;
@@ -615,13 +601,7 @@ public class GameManager {
     }
 
     private String handleSpecialCases(Programmer current) {
-        // Jogador preso sem ferramenta
-        if (pendingReason == PENDING_REASON_TRAPPED) {
-            clearPendingState();
-            turnCount++;
-            advanceTurnCursor();
-            return "Ciclo Infinito!";
-        }
+        // TRAPPED é tratado diretamente no moveCurrentPlayer
 
         if (pendingReason == PENDING_REASON_DEFEATED) {
             clearPendingState();
