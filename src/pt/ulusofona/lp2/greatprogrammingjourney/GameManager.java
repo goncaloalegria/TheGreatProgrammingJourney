@@ -481,8 +481,11 @@ public class GameManager {
             return false;
         }
 
-        // Se está preso: não pode mover, retorna false
+        // Se está preso: não pode mover, mas react deve retornar mensagem
         if (current.isTrapped()) {
+            setLastMoveNoChange(currentId, current.getPosition(), nrPositions);
+            this.pendingReaction = true;
+            this.pendingReason = PENDING_REASON_TRAPPED;
             return false;
         }
 
@@ -598,7 +601,13 @@ public class GameManager {
     }
 
     private String handleSpecialCases(Programmer current) {
-        // TRAPPED é tratado diretamente no moveCurrentPlayer
+        // Jogador preso - retorna mensagem do abismo e avança turno
+        if (pendingReason == PENDING_REASON_TRAPPED) {
+            clearPendingState();
+            turnCount++;
+            advanceTurnCursor();
+            return "Ciclo Infinito!";
+        }
 
         if (pendingReason == PENDING_REASON_DEFEATED) {
             clearPendingState();

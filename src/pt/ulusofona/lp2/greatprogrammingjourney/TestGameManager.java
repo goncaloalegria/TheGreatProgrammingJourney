@@ -7,6 +7,69 @@ public class TestGameManager {
 
 
     @Test
+    public void testCicloInfinitoSimples() {
+        GameManager gm = new GameManager();
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", "Purple"},
+                {"2", "Bob", "Python", "Green"}
+        };
+        String[][] abyssesAndTools = {
+                {"0", "8", "5"}  // Abismo Ciclo Infinito (ID 8) na posição 5
+        };
+        gm.createInitialBoard(playerInfo, 10, abyssesAndTools);
+
+        System.out.println("Current player: " + gm.getCurrentPlayerID());
+
+        boolean moved = gm.moveCurrentPlayer(4);  // pos 1 -> 5
+        System.out.println("moveCurrentPlayer(4): " + moved);
+
+        String react = gm.reactToAbyssOrTool();
+        System.out.println("reactToAbyssOrTool(): '" + react + "'");
+        System.out.println("react is null: " + (react == null));
+
+        String[] info = gm.getProgrammerInfo(1);
+        System.out.println("Estado: " + info[6]);
+        System.out.println("Posição: " + info[4]);
+    }
+
+    @Test
+    public void testFunctionalProgrammingCancelsInfiniteLoop() {
+        GameManager gm = new GameManager();
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", "Purple"},
+                {"2", "Bob", "Python", "Green"}
+        };
+        String[][] abyssesAndTools = {
+                {"1", "1", "4"},  // Ferramenta Prog. Funcional (ID 1) na posição 4
+                {"0", "8", "8"}   // Abismo Ciclo Infinito (ID 8) na posição 8
+        };
+        gm.createInitialBoard(playerInfo, 15, abyssesAndTools);
+
+        // Turno 1: Jogador 1 apanha ferramenta
+        gm.moveCurrentPlayer(3);
+        String react1 = gm.reactToAbyssOrTool();
+        System.out.println("Turno 1 - Apanhou ferramenta: " + react1);
+        System.out.println("Ferramentas: " + gm.getProgrammerInfo(1)[5]);
+
+        // Turno 2: Jogador 2
+        gm.moveCurrentPlayer(2);
+        gm.reactToAbyssOrTool();
+
+        // Turno 3: Jogador 1 vai para Ciclo Infinito COM ferramenta
+        boolean moved = gm.moveCurrentPlayer(4);
+        System.out.println("\nTurno 3 - move: " + moved);
+        String react2 = gm.reactToAbyssOrTool();
+        System.out.println("React: " + react2);
+        System.out.println("Estado: " + gm.getProgrammerInfo(1)[6]);
+        System.out.println("Posição: " + gm.getProgrammerInfo(1)[4]);
+
+        // Se a ferramenta cancela o abismo, o jogador deve estar "Em Jogo" na posição 8
+        System.out.println("\nFerramenta cancelou? " + (react2 != null && react2.contains("anulado")));
+        System.out.println("Jogador está Em Jogo? " + gm.getProgrammerInfo(1)[6].equals("Em Jogo"));
+    }
+
+
+    @Test
     public void testCompleteScenario() {
         GameManager gm = new GameManager();
 
@@ -511,6 +574,36 @@ public class TestGameManager {
         System.out.println("PosiÃ§Ã£o obtida: " + pos);
 
         assertEquals(8, pos, "Jogador deveria estar na posiÃ§Ã£o 8 (ferramenta anulou)");
+    }
+
+
+    @Test
+    public void testCicloInfinitoPreso() {
+        GameManager gm = new GameManager();
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", "Purple"},
+                {"2", "Bob", "Python", "Green"}
+        };
+        String[][] abyssesAndTools = {
+                {"0", "8", "5"}  // Abismo Ciclo Infinito (ID 8) na posição 5
+        };
+        gm.createInitialBoard(playerInfo, 10, abyssesAndTools);
+
+        // Turno 1: Jogador 1 cai no Ciclo Infinito
+        gm.moveCurrentPlayer(4);
+        String react1 = gm.reactToAbyssOrTool();
+        System.out.println("Turno 1 react: " + react1 + " (esperado: Ciclo Infinito!)");
+        System.out.println("Estado: " + gm.getProgrammerInfo(1)[6] + " (esperado: Preso)");
+
+        // Turno 2: Jogador 2 move
+        gm.moveCurrentPlayer(2);
+        gm.reactToAbyssOrTool();
+
+        // Turno 3: Jogador 1 (preso) tenta mover
+        boolean moved = gm.moveCurrentPlayer(3);
+        System.out.println("\nTurno 3 move: " + moved + " (esperado: false)");
+        String react2 = gm.reactToAbyssOrTool();
+        System.out.println("React: " + react2 + " (esperado: Ciclo Infinito!, NÃO null)");
     }
 
 
