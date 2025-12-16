@@ -607,6 +607,9 @@ public class TestGameManager {
     }
 
 
+
+
+
     @Test
     public void testCicloInfinitoCompleto() {
         GameManager gm = new GameManager();
@@ -615,7 +618,7 @@ public class TestGameManager {
                 {"2", "Bob", "Python", "Green"}
         };
         String[][] abyssesAndTools = {
-                {"0", "8", "5"}
+                {"0", "8", "5"}  // Ciclo Infinito na posição 5
         };
         gm.createInitialBoard(playerInfo, 10, abyssesAndTools);
 
@@ -630,11 +633,11 @@ public class TestGameManager {
         gm.moveCurrentPlayer(2);
         gm.reactToAbyssOrTool();
 
-        // Turno 3: Jogador preso tenta mover
+        // Turno 3: Jogador preso SEM ferramenta tenta mover
         boolean m3 = gm.moveCurrentPlayer(3);
         String r3 = gm.reactToAbyssOrTool();
-        System.out.println("\nT3 move: " + m3 + " (esperado: true)");
-        System.out.println("T3 react: " + r3 + " (esperado: Ciclo Infinito!)");
+        System.out.println("\nT3 move: " + m3 + " (esperado: false)");
+        System.out.println("T3 react: " + r3 + " (esperado: null)");
     }
 
 
