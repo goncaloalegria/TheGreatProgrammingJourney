@@ -357,17 +357,28 @@ public class GameManager {
             return "";
         }
 
-        ArrayList<Programmer> ordered = new ArrayList<>(programmers);
-        ordered.sort(Comparator.comparingInt(Programmer::getId));
+        // Filtrar apenas jogadores que NÃO estão derrotados
+        ArrayList<Programmer> alive = new ArrayList<>();
+        for (Programmer p : programmers) {
+            if (p != null && !p.isDefeated()) {
+                alive.add(p);
+            }
+        }
+
+        if (alive.isEmpty()) {
+            return "";
+        }
+
+        alive.sort(Comparator.comparingInt(Programmer::getId));
 
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < ordered.size(); i++) {
-            Programmer p = ordered.get(i);
+        for (int i = 0; i < alive.size(); i++) {
+            Programmer p = alive.get(i);
 
             sb.append(p.getName())
                     .append(" : ")
                     .append(p.getToolsInfo());
-            if (i < ordered.size() - 1) {
+            if (i < alive.size() - 1) {
                 sb.append(" | ");
             }
         }
