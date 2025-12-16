@@ -7,6 +7,170 @@ public class TestGameManager {
 
 
     @Test
+    public void testCicloInfinitoExact() {
+        GameManager gm = new GameManager();
+
+        // Configuração típica do professor
+        String[][] playerInfo = {
+                {"1", "P1", "Java", "Purple"},
+                {"2", "P2", "Python", "Green"}
+        };
+
+        String[][] abyssesAndTools = {
+                {"0", "8", "5"}  // Abismo ID 8 (Ciclo Infinito) na posição 5
+        };
+
+        boolean result = gm.createInitialBoard(playerInfo, 10, abyssesAndTools);
+        System.out.println("createInitialBoard: " + result);
+
+        // Movimento para cair no abismo
+        System.out.println("Current player before move: " + gm.getCurrentPlayerID());
+
+        boolean moveResult = gm.moveCurrentPlayer(4);  // 1 + 4 = 5
+        System.out.println("moveCurrentPlayer(4): " + moveResult);
+
+        String reactResult = gm.reactToAbyssOrTool();
+        System.out.println("reactToAbyssOrTool(): '" + reactResult + "'");
+        System.out.println("reactToAbyssOrTool() is null: " + (reactResult == null));
+
+        // Verificar estado
+        String[] info = gm.getProgrammerInfo(1);
+        System.out.println("Estado do jogador: " + info[6]);
+        System.out.println("Posição do jogador: " + info[4]);
+    }
+
+    @Test
+    public void testLogicErrorVsTool_Simulation() {
+        GameManager gm = new GameManager();
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", "Purple"},
+                {"2", "Bob", "Python", "Green"}
+        };
+        // Simular o que o teste do professor pode estar a fazer
+        String[][] abyssesAndTools = {
+                {"1", "1", "5"},   // Ferramenta Prog. Funcional (ID 1) na posição 5
+                {"0", "1", "10"}   // Abismo Erro Lógica (ID 1) na posição 10
+        };
+        gm.createInitialBoard(playerInfo, 15, abyssesAndTools);
+
+        // Verificar estado inicial
+        System.out.println("Jogador atual: " + gm.getCurrentPlayerID());
+
+        // Turno 1
+        System.out.println("\n=== TURNO 1 ===");
+        boolean m1 = gm.moveCurrentPlayer(4);
+        System.out.println("move(4): " + m1);
+        String r1 = gm.reactToAbyssOrTool();
+        System.out.println("react: " + r1);
+        System.out.println("P1: " + gm.getProgrammerInfoAsStr(1));
+        System.out.println("Jogador atual: " + gm.getCurrentPlayerID());
+
+        // Turno 2
+        System.out.println("\n=== TURNO 2 ===");
+        boolean m2 = gm.moveCurrentPlayer(2);
+        System.out.println("move(2): " + m2);
+        String r2 = gm.reactToAbyssOrTool();
+        System.out.println("react: " + r2);
+        System.out.println("Jogador atual: " + gm.getCurrentPlayerID());
+
+        // Turno 3
+        System.out.println("\n=== TURNO 3 ===");
+        boolean m3 = gm.moveCurrentPlayer(5);
+        System.out.println("move(5): " + m3);
+        String r3 = gm.reactToAbyssOrTool();
+        System.out.println("react: " + r3);
+        System.out.println("P1: " + gm.getProgrammerInfoAsStr(1));
+
+        String[] info = gm.getProgrammerInfo(1);
+        System.out.println("\nPosição final: " + info[4] + " (esperado: 10)");
+        System.out.println("Ferramentas: " + info[5] + " (esperado: No tools)");
+    }
+
+    @Test
+    public void testAssemblyRestriction() {
+        GameManager gm = new GameManager();
+        String[][] playerInfo = {
+                {"1", "Alice", "Assembly", "Purple"},
+                {"2", "Bob", "Python", "Green"}
+        };
+        gm.createInitialBoard(playerInfo, 15, null);
+
+        System.out.println("First lang: '" + gm.getProgrammerInfo(1)[2].split(";")[0].trim() + "'");
+
+        boolean move3 = gm.moveCurrentPlayer(3);
+        System.out.println("Assembly move 3: " + move3 + " (esperado: false)");
+    }
+
+
+    @Test
+    public void testInfiniteLoopWithTool() {
+        GameManager gm = new GameManager();
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", "Purple"},
+                {"2", "Bob", "Python", "Green"}
+        };
+        String[][] abyssesAndTools = {
+                {"1", "5", "4"},  // Ferramenta Ajuda Do Professor (ID 5) na posição 4
+                {"0", "8", "8"}   // Abismo Ciclo Infinito (ID 8) na posição 8
+        };
+        gm.createInitialBoard(playerInfo, 15, abyssesAndTools);
+
+        System.out.println("=== Turno 1: Jogador 1 apanha ferramenta ===");
+        boolean moved1 = gm.moveCurrentPlayer(3);  // pos 1 -> 4
+        System.out.println("move: " + moved1);
+        String react1 = gm.reactToAbyssOrTool();
+        System.out.println("react: " + react1);
+        System.out.println("Ferramentas: " + gm.getProgrammerInfo(1)[5]);
+
+        System.out.println("\n=== Turno 2: Jogador 2 move ===");
+        gm.moveCurrentPlayer(2);
+        gm.reactToAbyssOrTool();
+
+        System.out.println("\n=== Turno 3: Jogador 1 vai para Ciclo Infinito ===");
+        boolean moved2 = gm.moveCurrentPlayer(4);  // pos 4 -> 8
+        System.out.println("move: " + moved2 + " (esperado: true)");
+        String react2 = gm.reactToAbyssOrTool();
+        System.out.println("react: " + react2 + " (esperado: anulado)");
+        System.out.println("Estado: " + gm.getProgrammerInfo(1)[6] + " (esperado: Em Jogo)");
+        System.out.println("Posição: " + gm.getProgrammerInfo(1)[4] + " (esperado: 8)");
+    }
+
+
+    @Test
+    public void testCicloInfinito() {
+        GameManager gm = new GameManager();
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", "Purple"},
+                {"2", "Bob", "Python", "Green"}
+        };
+        String[][] abyssesAndTools = {
+                {"0", "8", "5"}  // Abismo Ciclo Infinito (ID 8) na posição 5
+        };
+        gm.createInitialBoard(playerInfo, 10, abyssesAndTools);
+
+        System.out.println("=== Turno 1: Jogador 1 move 4 casas (vai para posição 5 - Ciclo Infinito) ===");
+        boolean moved1 = gm.moveCurrentPlayer(4);
+        System.out.println("moveCurrentPlayer returned: " + moved1 + " (esperado: true)");
+
+        String react1 = gm.reactToAbyssOrTool();
+        System.out.println("reactToAbyssOrTool returned: " + react1 + " (esperado: Ciclo Infinito!)");
+        System.out.println("Player 1 state: " + gm.getProgrammerInfo(1)[6] + " (esperado: Preso)");
+
+        System.out.println("\n=== Turno 2: Jogador 2 move ===");
+        gm.moveCurrentPlayer(2);
+        gm.reactToAbyssOrTool();
+
+        System.out.println("\n=== Turno 3: Jogador 1 (preso) tenta mover ===");
+        boolean moved2 = gm.moveCurrentPlayer(3);
+        System.out.println("moveCurrentPlayer returned: " + moved2 + " (esperado: false)");
+
+        String react2 = gm.reactToAbyssOrTool();
+        System.out.println("reactToAbyssOrTool returned: " + react2 + " (esperado: null)");
+
+        System.out.println("\nJogador atual: " + gm.getCurrentPlayerID() + " (esperado: 2)");
+    }
+
+    @Test
     public void testToolCancelsAbyss() {
         GameManager gm = new GameManager();
         String[][] playerInfo = {

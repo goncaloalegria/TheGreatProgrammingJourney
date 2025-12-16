@@ -27,13 +27,13 @@ public class GameManager {
     private Integer winnerId;
     private int turnCount;
 
-    // Abysses e Tools por posiÃ§Ã£o
+    // Abysses e Tools por posio
     private HashMap<Integer, Abyss> abyssesByPosition;
     private HashMap<Integer, Tool> toolsByPosition;
 
     private Random random;
 
-    // --- Info da Ãºltima jogada ---
+    // --- Info da ltima jogada ---
     private int lastDiceValue = 0;
     private Integer lastPlayerId = null;
     private int lastFromPosition = 0;
@@ -42,10 +42,10 @@ public class GameManager {
     private Tool lastToolUsed = null;
     private Tool lastToolCollected = null;
 
-    // Se o turno do jogador atual foi "consumido" e estÃ¡ Ã  espera de reaÃ§Ã£o
+    // Se o turno do jogador atual foi "consumido" e est  espera de reao
     private boolean pendingReaction = false;
 
-    // RazÃµes para moveCurrentPlayer devolver false mas o turno avanÃ§ar via react
+    // Razes para moveCurrentPlayer devolver false mas o turno avanar via react
     private int pendingReason = 0;
     private static final int PENDING_REASON_NONE = 0;
     private static final int PENDING_REASON_TRAPPED = 1;
@@ -111,7 +111,7 @@ public class GameManager {
         this.gameOver = false;
         this.winnerId = null;
 
-        // TurnCount: comeÃ§a no turno 1
+        // TurnCount: comea no turno 1
         this.turnCount = 1;
 
         this.lastDiceValue = 0;
@@ -316,7 +316,7 @@ public class GameManager {
     }
 
     // ORDEM (7 elementos):
-    // 0 ID, 1 Nome, 2 Linguagens, 3 Cor, 4 Posição, 5 Ferramentas, 6 Estado
+    // 0 ID, 1 Nome, 2 Linguagens, 3 Cor, 4 Posio, 5 Ferramentas, 6 Estado
     public String[] getProgrammerInfo(int id) {
         Programmer programmer = idToProgrammer.get(id);
         if (programmer == null) {
@@ -445,12 +445,12 @@ public class GameManager {
 
     /**
      * moveCurrentPlayer:
-     * - NÃƒO avanÃ§a turnCursor (isso Ã© no react)
+     * - NO avana turnCursor (isso  no react)
      * - Se o jogador estiver Preso/Derrotado: devolve false e deixa pendingReason
      * - Bounce-back ao ultrapassar a meta
-     * - RestriÃ§Ãµes por linguagem:
+     * - Restries por linguagem:
      *   Assembly: max 2
-     *   C: max 3  (C# NÃƒO conta como C)
+     *   C: max 3  (C# NO conta como C)
      */
     public boolean moveCurrentPlayer(int nrPositions) {
         if (gameOver) {
@@ -463,7 +463,7 @@ public class GameManager {
             return false;
         }
 
-        // Reset pendÃªncias anteriores
+        // Reset pendncias anteriores
         this.pendingReaction = false;
         this.pendingReason = PENDING_REASON_NONE;
 
@@ -473,7 +473,7 @@ public class GameManager {
             return false;
         }
 
-        // Se está derrotado mas ainda aparece (segurança)
+        // Se est derrotado mas ainda aparece (segurana)
         if (current.isDefeated()) {
             setLastMoveNoChange(currentId, current.getPosition(), nrPositions);
             this.pendingReaction = true;
@@ -481,16 +481,25 @@ public class GameManager {
             return false;
         }
 
-        // Se está preso: turno é saltado (só se liberta se tiver ferramenta AO CAIR)
+        // Se est preso: verificar se tem ferramenta para se libertar
         if (current.isTrapped()) {
-            // Jogador preso não pode mover - turno é saltado
-            turnCount++;
-            advanceTurnCursor();
-            return false;
+            // Verificar se tem ferramenta que anula Ciclo Infinito (abismo ID 8)
+            Tool liberator = current.findToolToCancelAbyss(InfiniteLoopAbyss.ID);
+            if (liberator != null) {
+                // Tem ferramenta! Liberta-se e usa a ferramenta
+                current.removeTool(liberator);
+                current.setState("Em Jogo");
+                // Continua o movimento normalmente (no retorna aqui)
+            } else {
+                // No tem ferramenta - turno  saltado
+                turnCount++;
+                advanceTurnCursor();
+                return false;
+            }
         }
 
-        // Restrições por linguagem
-        // Assembly: máximo 2 casas, C (exatamente): máximo 3 casas
+        // Restries por linguagem
+        // Assembly: mximo 2 casas, C (exatamente): mximo 3 casas
         String firstLang = current.getFirstLanguage();
         if (firstLang != null) {
             if (firstLang.equalsIgnoreCase("Assembly") && nrPositions > 2) {
@@ -500,7 +509,7 @@ public class GameManager {
                 return false;
             }
 
-            // C (apenas "C" exato, não "C++" nem "C#")
+            // C (apenas "C" exato, no "C++" nem "C#")
             if (firstLang.equalsIgnoreCase("C") && nrPositions > 3) {
                 setLastMoveNoChange(currentId, current.getPosition(), nrPositions);
                 this.pendingReaction = true;
@@ -540,7 +549,7 @@ public class GameManager {
         this.lastToolCollected = null;
     }
 
-    // Bounce-back: se passar da meta, o jogador "bate" e volta para trÃ¡s
+    // Bounce-back: se passar da meta, o jogador "bate" e volta para trs
     private int calculateNewPosition(int from, int nrPositions) {
         int to = from + nrPositions;
 
@@ -567,7 +576,7 @@ public class GameManager {
             return null;
         }
 
-        // Trata casos especiais (preso, derrotado, movimento invÃ¡lido)
+        // Trata casos especiais (preso, derrotado, movimento invlido)
         String specialCaseResult = handleSpecialCases(current);
         if (specialCaseResult != null) {
             return specialCaseResult;
@@ -578,16 +587,16 @@ public class GameManager {
 
         int pos = current.getPosition();
 
-        // Processa ferramenta na posiÃ§Ã£o
+        // Processa ferramenta na posio
         String toolMsg = processTool(current, pos);
 
-        // Processa abismo na posiÃ§Ã£o
+        // Processa abismo na posio
         String abyssMsg = processAbyss(current, pos);
 
-        // Verifica vitÃ³ria
+        // Verifica vitria
         checkForVictory(current);
 
-        // AvanÃ§a turno se necessÃ¡rio
+        // Avana turno se necessrio
         advanceTurnIfNeeded(pos);
 
         clearPendingState();
@@ -601,7 +610,7 @@ public class GameManager {
     }
 
     private String handleSpecialCases(Programmer current) {
-        // TRAPPED é tratado diretamente no moveCurrentPlayer
+        // TRAPPED  tratado diretamente no moveCurrentPlayer
 
         if (pendingReason == PENDING_REASON_DEFEATED) {
             clearPendingState();
@@ -634,17 +643,17 @@ public class GameManager {
         }
 
         if (!current.hasToolOfType(boardTool.getId())) {
-            // Criar uma nova instância da ferramenta para o jogador
+            // Criar uma nova instncia da ferramenta para o jogador
             Tool newTool = createTool(boardTool.getId(), pos);
             if (newTool != null) {
                 current.addTool(newTool);
                 this.lastToolCollected = newTool;
                 return "Recolheu ferramenta: " + boardTool.getName();
             } else {
-                return null;  // Ferramenta não foi criada
+                return null;  // Ferramenta no foi criada
             }
         } else {
-            return "Já possui a ferramenta: " + boardTool.getName();
+            return "J possui a ferramenta: " + boardTool.getName();
         }
     }
 
@@ -800,7 +809,7 @@ public class GameManager {
         Tool tool = toolsByPosition.get(pos);
         if (tool != null) {
             if (!programmer.hasToolOfType(tool.getId())) {
-                // Criar nova instância da ferramenta
+                // Criar nova instncia da ferramenta
                 Tool newTool = createTool(tool.getId(), pos);
                 programmer.addTool(newTool);
                 // Ferramenta permanece no tabuleiro
@@ -1104,13 +1113,13 @@ public class GameManager {
         } catch (InvalidFileException e) {
             throw e;
         } catch (Exception e) {
-            throw new InvalidFileException("Formato de ficheiro invÃ¡lido");
+            throw new InvalidFileException("Formato de ficheiro invlido");
         }
     }
 
     private void validateLoadFile(File file) throws FileNotFoundException {
         if (file == null || !file.exists() || !file.isFile()) {
-            throw new FileNotFoundException("Ficheiro nÃ£o encontrado");
+            throw new FileNotFoundException("Ficheiro no encontrado");
         }
     }
 
@@ -1138,7 +1147,7 @@ public class GameManager {
             String line = scanner.nextLine();
             String[] parts = line.split("\\|", -1);
             if (parts.length < 6) {
-                throw new InvalidFileException("Linha de programador invÃ¡lida: " + line);
+                throw new InvalidFileException("Linha de programador invlida: " + line);
             }
 
             int id = Integer.parseInt(parts[0]);
@@ -1186,7 +1195,7 @@ public class GameManager {
             String line = scanner.nextLine();
             String[] parts = line.split("\\|", -1);
             if (parts.length < 2) {
-                throw new InvalidFileException("Linha de abismo invÃ¡lida: " + line);
+                throw new InvalidFileException("Linha de abismo invlida: " + line);
             }
 
             int abyssId = Integer.parseInt(parts[0]);
@@ -1215,7 +1224,7 @@ public class GameManager {
             String line = scanner.nextLine();
             String[] parts = line.split("\\|", -1);
             if (parts.length < 2) {
-                throw new InvalidFileException("Linha de ferramenta invÃ¡lida: " + line);
+                throw new InvalidFileException("Linha de ferramenta invlida: " + line);
             }
 
             int toolId = Integer.parseInt(parts[0]);
