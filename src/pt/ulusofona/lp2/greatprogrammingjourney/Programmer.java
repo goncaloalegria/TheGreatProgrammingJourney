@@ -196,7 +196,7 @@ public class Programmer {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < names.size(); i++) {
             if (i > 0) {
-                sb.append("; ");
+                sb.append(";");
             }
             sb.append(names.get(i));
         }

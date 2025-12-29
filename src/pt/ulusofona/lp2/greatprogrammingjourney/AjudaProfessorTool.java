@@ -12,7 +12,7 @@ import java.util.Set;
 public class AjudaProfessorTool extends Tool {
 
     public static final int ID = 5;
-    private static final String NAME = "Ajuda Do Professor";
+    private static final String NAME = "Ajuda do Professor";
     private static final String IMAGE_NAME = "ajuda-professor.png";
 
     // IDs dos abismos que esta ferramenta pode anular
