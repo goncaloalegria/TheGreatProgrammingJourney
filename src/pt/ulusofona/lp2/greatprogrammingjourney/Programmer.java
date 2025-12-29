@@ -13,6 +13,8 @@ public class Programmer {
     private String color;
     private int position;
     private String state;
+    private String cause;  // Causa da derrota ou prisão (nome do abismo)
+    private int moveCount;  // Contador de movimentos/jogadas
 
     private Deque<Integer> positionHistory;
     private List<Tool> tools;
@@ -24,6 +26,8 @@ public class Programmer {
         this.color = color;
         this.position = 1;
         this.state = "Em Jogo";
+        this.cause = null;
+        this.moveCount = 0;
         this.positionHistory = new ArrayDeque<>();
         this.tools = new ArrayList<>();
     }
@@ -58,6 +62,26 @@ public class Programmer {
 
     public void setState(String state) {
         this.state = state;
+    }
+
+    public String getCause() {
+        return cause;
+    }
+
+    public void setCause(String cause) {
+        this.cause = cause;
+    }
+
+    public int getMoveCount() {
+        return moveCount;
+    }
+
+    public void setMoveCount(int moveCount) {
+        this.moveCount = moveCount;
+    }
+
+    public void incrementMoveCount() {
+        this.moveCount++;
     }
 
     public boolean isPlaying() {
@@ -243,7 +267,7 @@ public class Programmer {
      * [1] Nome
      * [2] Linguagens (ordem original, separadas por "; ")
      * [3] Cor (EXATAMENTE como foi dada, ex: "Blue")
-     * [4] Posição
+     * [4] PosiÃ§Ã£o
      * [5] Ferramentas (ordenadas, separadas por "; ")
      * [6] Estado ("Em Jogo", "Preso", "Derrotado")
      */

@@ -535,6 +535,7 @@ public class GameManager {
         this.lastToPosition = to;
 
         current.recordMove(to);
+        current.incrementMoveCount();  // Incrementar contador de movimentos
 
         this.pendingReaction = true;
         this.pendingReason = PENDING_REASON_NONE;
@@ -710,12 +711,18 @@ public class GameManager {
             for (Programmer p : programmers) {
                 if (p != null && p.getId() != current.getId() && p.getPosition() == pos && p.isTrapped()) {
                     p.setState("Em Jogo");
+                    p.setCause(null);  // Limpar causa ao ser libertado
                     break;
                 }
             }
         }
 
         abyss.applyEffect(current, lastDiceValue, lastFromPosition);
+
+        // Guardar causa se o jogador ficou preso ou foi derrotado
+        if (current.isDefeated() || current.isTrapped()) {
+            current.setCause(abyss.getName());
+        }
 
         if (current.isDefeated()) {
             removePlayerFromTurnOrder(current.getId());
@@ -726,14 +733,13 @@ public class GameManager {
 
     /**
      * Tratamento especial do abismo LLM (ID 20):
-     * - Se dado < 4 e tem ferramenta "Ajuda Do Professor": fica no sítio (ferramenta consumida)
-     * - Se dado < 4 e não tem ferramenta: volta para a posição anterior
-     * - Se dado >= 4: avança mais uma vez o mesmo número de casas (independentemente de ter ferramenta)
+     * - Se é a 4ª jogada ou posterior: AVANÇA mais uma vez o mesmo número de casas (independentemente de ter ferramenta)
+     * - Se é a 1ª, 2ª ou 3ª jogada E tem ferramenta "Ajuda Do Professor": fica no sítio (ferramenta consumida)
+     * - Se é a 1ª, 2ª ou 3ª jogada E não tem ferramenta: volta para a posição anterior
      */
     private String handleLLMAbyss(Programmer current, Abyss abyss) {
-        // Se o dado foi >= 4, a ferramenta não protege
-        if (lastDiceValue >= 4) {
-            // Avançar mais uma vez o mesmo número de casas
+        // Se é a 4ª jogada ou posterior, a ferramenta não protege - AVANÇA mais uma vez
+        if (current.getMoveCount() >= 4) {
             int currentPos = current.getPosition();
             int newPos = currentPos + lastDiceValue;
 
@@ -754,7 +760,7 @@ public class GameManager {
             return abyss.getName() + "!";
         }
 
-        // Se dado < 4, verificar se tem ferramenta para anular
+        // Se é a 1ª, 2ª ou 3ª jogada, verificar se tem ferramenta para anular
         Tool canceller = current.findToolToCancelAbyss(abyss.getId());
 
         if (canceller != null) {
@@ -879,7 +885,7 @@ public class GameManager {
         Tool tool = toolsByPosition.get(pos);
         if (tool != null) {
             if (!programmer.hasToolOfType(tool.getId())) {
-                // Criar nova instÃƒÂ¢ncia da ferramenta
+                // Criar nova instância da ferramenta
                 Tool newTool = createTool(tool.getId(), pos);
                 if (newTool != null) {
                     programmer.addTool(newTool);
@@ -904,6 +910,11 @@ public class GameManager {
         }
 
         abyss.applyEffect(programmer, 0, pos);
+
+        // Guardar causa se o jogador ficou preso ou foi derrotado
+        if (programmer.isDefeated() || programmer.isTrapped()) {
+            programmer.setCause(abyss.getName());
+        }
 
         if (programmer.isDefeated()) {
             removePlayerFromTurnOrder(programmer.getId());
@@ -975,16 +986,37 @@ public class GameManager {
         out.add("NR. DE TURNOS");
         out.add(String.valueOf(turnCount));
         out.add("");
-        out.add("VENCEDOR");
-        out.add(getWinnerName());
-        out.add("");
-        out.add("RESTANTES");
 
-        ArrayList<Programmer> remainingPlayers = getRemainingPlayers();
-        sortProgrammersByPositionAndName(remainingPlayers);
+        // Verificar se é empate (winnerId == null significa empate)
+        if (winnerId == null) {
+            // Formato de empate
+            out.add("O jogo terminou empatado.");
+            out.add("");
+            out.add("Participantes:");
 
-        for (Programmer programmer : remainingPlayers) {
-            out.add(programmer.getName() + " " + programmer.getPosition());
+            ArrayList<Programmer> allPlayers = new ArrayList<>(programmers);
+            sortProgrammersByPositionAndName(allPlayers);
+
+            for (Programmer programmer : allPlayers) {
+                String cause = programmer.getCause();
+                if (cause == null) {
+                    cause = "";
+                }
+                out.add(programmer.getName() + " : " + programmer.getPosition() + " : " + cause);
+            }
+        } else {
+            // Formato normal com vencedor
+            out.add("VENCEDOR");
+            out.add(getWinnerName());
+            out.add("");
+            out.add("RESTANTES");
+
+            ArrayList<Programmer> remainingPlayers = getRemainingPlayers();
+            sortProgrammersByPositionAndName(remainingPlayers);
+
+            for (Programmer programmer : remainingPlayers) {
+                out.add(programmer.getName() + " " + programmer.getPosition());
+            }
         }
 
         return out;
@@ -1139,6 +1171,11 @@ public class GameManager {
                     toolIds.append(t.getId());
                 }
 
+                String cause = p.getCause();
+                if (cause == null) {
+                    cause = "";
+                }
+
                 out.println(
                         p.getId() + "|" +
                                 p.getName() + "|" +
@@ -1146,7 +1183,9 @@ public class GameManager {
                                 p.getColor() + "|" +
                                 p.getPosition() + "|" +
                                 p.getState() + "|" +
-                                toolIds
+                                toolIds + "|" +
+                                cause + "|" +
+                                p.getMoveCount()
                 );
             }
 
@@ -1268,6 +1307,16 @@ public class GameManager {
                         }
                     }
                 }
+            }
+
+            // Ler causa (campo opcional, índice 7)
+            if (parts.length >= 8 && !parts[7].isEmpty()) {
+                p.setCause(parts[7]);
+            }
+
+            // Ler moveCount (campo opcional, índice 8)
+            if (parts.length >= 9 && !parts[8].isEmpty()) {
+                p.setMoveCount(Integer.parseInt(parts[8]));
             }
 
             programmers.add(p);

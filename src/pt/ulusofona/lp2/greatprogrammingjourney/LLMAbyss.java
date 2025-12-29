@@ -5,12 +5,11 @@ package pt.ulusofona.lp2.greatprogrammingjourney;
  *
  * Efeito:
  * - Só pode ser anulado pela ferramenta "Ajuda Do Professor" (ID 5)
- * - Se o jogador tem a ferramenta E o dado foi < 4: fica no sítio (ferramenta consumida)
- * - Se o jogador não tem a ferramenta E o dado foi < 4: volta para a posição anterior
- * - Se o dado foi >= 4: avança mais uma vez o mesmo número de casas (independentemente de ter ferramenta)
+ * - Se é a 1ª, 2ª ou 3ª jogada E tem ferramenta: fica no sítio (ferramenta consumida)
+ * - Se é a 1ª, 2ª ou 3ª jogada E não tem ferramenta: volta para a posição anterior
+ * - Se é a 4ª jogada ou posterior: AVANÇA mais uma vez o mesmo número de casas (independentemente de ter ferramenta)
  *
- * Nota: A lógica especial para dado >= 4 é tratada no GameManager porque
- * precisa de acesso ao lastDiceValue e ao boardSize para calcular bounce-back.
+ * Nota: A lógica especial é tratada no GameManager.
  */
 public class LLMAbyss extends Abyss {
 
@@ -28,13 +27,10 @@ public class LLMAbyss extends Abyss {
             return;
         }
 
-        // Se o dado foi < 4, o jogador volta para a posição anterior
+        // O jogador volta para a posição anterior
         // (Este método só é chamado quando o jogador NÃO tem ferramenta
-        // ou quando dado >= 4 - neste caso a lógica especial é tratada no GameManager)
-        if (diceValue < 4) {
-            programmer.setPosition(previousPosition);
-        }
-        // Se dado >= 4, a lógica é tratada no GameManager
+        // nas primeiras 3 jogadas - a lógica da 4ª jogada+ é tratada no GameManager)
+        programmer.setPosition(previousPosition);
     }
 
     @Override
