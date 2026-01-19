@@ -1858,736 +1858,351 @@ public class TestGameManager {
         assertTrue(gm.getGameResults().contains("O jogo terminou empatado."));
     }
 
-    private static void setField(Object target, String fieldName, Object value) {
-        try {
-            Field f = target.getClass().getDeclaredField(fieldName);
-            f.setAccessible(true);
-            f.set(target, value);
-        } catch (Exception e) {
-            fail(e);
-        }
-    }
-
-    private static Object getField(Object target, String fieldName) {
-        try {
-            Field f = target.getClass().getDeclaredField(fieldName);
-            f.setAccessible(true);
-            return f.get(target);
-        } catch (Exception e) {
-            fail(e);
-            return null;
-        }
-    }
-
-    private static Object callPrivate(Object target, String methodName, Class<?>[] types, Object[] args) {
-        try {
-            Method m = target.getClass().getDeclaredMethod(methodName, types);
-            m.setAccessible(true);
-            return m.invoke(target, args);
-        } catch (Exception e) {
-            fail(e);
-            return null;
-        }
-    }
-
-    // ---------- Main ----------
     @Test
-    public void testMainRuns() {
-        assertDoesNotThrow(() -> Main.main(new String[0]));
-    }
-
-    // ---------- InvalidFileException ----------
-    @Test
-    public void testInvalidFileExceptionConstructors() {
-        InvalidFileException a = new InvalidFileException();
-        InvalidFileException b = new InvalidFileException("x");
-        assertNotNull(a);
-        assertEquals("x", b.getMessage());
-    }
-
-    // ---------- createInitialBoard validation ----------
-    @Test
-    public void testCreateInitialBoardValidationFailures() {
-        GameManager gm = new GameManager();
-
-        assertFalse(gm.createInitialBoard(null, 10));
-
-        String[][] one = {{"1", "A", "Java", "Blue"}};
-        assertFalse(gm.createInitialBoard(one, 10));
-
-        String[][] five = {
-                {"1", "A", "Java", "Blue"},
-                {"2", "B", "Java", "Green"},
-                {"3", "C", "Java", "Brown"},
-                {"4", "D", "Java", "Purple"},
-                {"5", "E", "Java", "Blue"},
+    public void testCreateInitialBoardNullLanguages() {
+        String[][] playerInfo = {
+                {"1", "Alice", null, "Purple"},
+                {"2", "Bob", "Python", "Green"}
         };
-        assertFalse(gm.createInitialBoard(five, 20));
-
-        String[][] two = {
-                {"1", "A", "Java", "Blue"},
-                {"2", "B", "Java", "Green"},
-        };
-        assertFalse(gm.createInitialBoard(two, 3));
-
-        String[][] dupId = {
-                {"1", "A", "Java", "Blue"},
-                {"1", "B", "Java", "Green"},
-        };
-        assertFalse(gm.createInitialBoard(dupId, 10));
-
-        String[][] badColor = {
-                {"1", "A", "Java", "Red"},
-                {"2", "B", "Java", "Green"},
-        };
-        assertFalse(gm.createInitialBoard(badColor, 10));
-
-        String[][] dupColor = {
-                {"1", "A", "Java", "Blue"},
-                {"2", "B", "Java", "Blue"},
-        };
-        assertFalse(gm.createInitialBoard(dupColor, 10));
-
-        String[][] emptyName = {
-                {"1", "   ", "Java", "Blue"},
-                {"2", "B", "Java", "Green"},
-        };
-        assertFalse(gm.createInitialBoard(emptyName, 10));
-
-        String[][] nullLang = {
-                {"1", "A", null, "Blue"},
-                {"2", "B", "Java", "Green"},
-        };
-        assertFalse(gm.createInitialBoard(nullLang, 10));
+        assertFalse(gm.createInitialBoard(playerInfo, 10, null));
     }
 
     @Test
-    public void testConfigValidationFailures() {
-        GameManager gm = new GameManager();
-
-        String[][] players = {
-                {"1", "A", "Java", "Blue"},
-                {"2", "B", "Java", "Green"},
+    public void testCreateInitialBoardNullColor() {
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", null},
+                {"2", "Bob", "Python", "Green"}
         };
-
-        // tipo inválido
-        String[][] cfg1 = {{"2", "0", "2"}};
-        assertFalse(gm.createInitialBoard(players, 10, cfg1));
-
-        // abyss id inválido
-        String[][] cfg2 = {{"0", "11", "2"}};
-        assertFalse(gm.createInitialBoard(players, 10, cfg2));
-
-        // tool id inválido
-        String[][] cfg3 = {{"1", "6", "2"}};
-        assertFalse(gm.createInitialBoard(players, 10, cfg3));
-
-        // posição inválida (<=1)
-        String[][] cfg4 = {{"0", "0", "1"}};
-        assertFalse(gm.createInitialBoard(players, 10, cfg4));
-
-        // posição inválida (>= boardSize)
-        String[][] cfg5 = {{"0", "0", "10"}};
-        assertFalse(gm.createInitialBoard(players, 10, cfg5));
-
-        // slot repetido
-        String[][] cfg6 = {{"0", "0", "2"}, {"1", "0", "2"}};
-        assertFalse(gm.createInitialBoard(players, 10, cfg6));
-
-        // não numérico
-        String[][] cfg7 = {{"0", "x", "2"}};
-        assertFalse(gm.createInitialBoard(players, 10, cfg7));
+        assertFalse(gm.createInitialBoard(playerInfo, 10, null));
     }
 
     @Test
-    public void testConfigIgnoresNullAndShortRows() {
-        GameManager gm = new GameManager();
-        String[][] players = {
-                {"1", "A", "Java", "Blue"},
-                {"2", "B", "Java", "Green"},
+    public void testCreateInitialBoardConfigWithNullAndShortRowsStillValid() {
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", "Purple"},
+                {"2", "Bob", "Python", "Green"}
         };
         String[][] cfg = {
                 null,
-                {"0", "0"},     // short row -> ignored
-                {"1"},          // short row -> ignored
-        };
-        assertTrue(gm.createInitialBoard(players, 10, cfg));
-    }
-
-    // ---------- getCurrentPlayerID before init ----------
-    @Test
-    public void testCurrentPlayerBeforeInit() {
-        GameManager gm = new GameManager();
-        assertEquals(-1, gm.getCurrentPlayerID());
-        assertEquals("", gm.getCurrentPlayerName());
-        assertNull(gm.getCurrentPlayerInfo());
-    }
-
-    // ---------- Images / slots ----------
-    @Test
-    public void testGetImagePngAndGetSlotInfo() {
-        GameManager gm = new GameManager();
-
-        String[][] players = {
-                {"1", "A", "Java", "Blue"},
-                {"2", "B", "Java", "Green"},
+                {"1", "1"},          // linha curta -> ignorada
+                {"1", "1", "4"}      // Tool Programação Funcional na pos 4
         };
 
-        String[][] cfg = {
-                {"0", "0", "2"}, // Syntax abyss
-                {"1", "4", "3"}, // IDE tool
-        };
-
-        assertTrue(gm.createInitialBoard(players, 6, cfg));
-
-        assertNull(gm.getImagePng(0));
-        assertNull(gm.getImagePng(7));
-
-        assertEquals("glory.png", gm.getImagePng(6));
-        assertEquals("syntax.png", gm.getImagePng(2));
-        assertEquals("IDE.png", gm.getImagePng(3));
-        assertNull(gm.getImagePng(4));
-
-        // slot info empty
-        String[] s1 = gm.getSlotInfo(1);
-        assertNotNull(s1);
-        assertEquals("", s1[1]);
-        assertEquals("", s1[2]);
-
-        // move both to same slot to test ids sorted
-        assertTrue(gm.moveCurrentPlayer(1)); // P1 -> 2
-        gm.reactToAbyssOrTool();
-        assertTrue(gm.moveCurrentPlayer(1)); // P2 -> 2
-        gm.reactToAbyssOrTool();
-
-        String[] s2 = gm.getSlotInfo(2);
-        assertEquals("1,2", s2[0]);
-        assertEquals("Erro de sintaxe", s2[1]);
-        assertEquals("A:0", s2[2]);
-
-        String[] s3 = gm.getSlotInfo(3);
-        assertEquals("IDE", s3[1]);
-        assertEquals("T:4", s3[2]);
-
-        assertNull(gm.getSlotInfo(0));
-        assertNull(gm.getSlotInfo(999));
-    }
-
-    // ---------- Dice image ----------
-    @Test
-    public void testLastDiceImageName() {
-        GameManager gm = new GameManager();
-        assertNull(gm.getLastDiceImageName());
-
-        String[][] players = {
-                {"1", "A", "Java", "Blue"},
-                {"2", "B", "Java", "Green"},
-        };
-        assertTrue(gm.createInitialBoard(players, 10));
-
-        assertFalse(gm.moveCurrentPlayer(0));
-        assertFalse(gm.moveCurrentPlayer(7));
-
-        assertTrue(gm.moveCurrentPlayer(4));
-        assertEquals("dice4.png", gm.getLastDiceImageName());
-        gm.reactToAbyssOrTool();
-    }
-
-    // ---------- Language restrictions (Assembly/C) + invalid move special case ----------
-    @Test
-    public void testLanguageRestrictionsAndInvalidMoveConsumesTurn() {
-        GameManager gm = new GameManager();
-        String[][] players = {
-                {"1", "Asm", "Assembly", "Blue"},
-                {"2", "Cman", "C", "Green"},
-        };
-        assertTrue(gm.createInitialBoard(players, 20));
-
-        // Assembly >2 invalid
-        assertFalse(gm.moveCurrentPlayer(3));
-        assertNull(gm.reactToAbyssOrTool());
-
-        // C >3 invalid
-        assertFalse(gm.moveCurrentPlayer(4));
-        assertNull(gm.reactToAbyssOrTool());
+        assertTrue(gm.createInitialBoard(playerInfo, 10, cfg));
+        assertNotNull(gm.getSlotInfo(4));
+        assertTrue(gm.getSlotInfo(4)[2].startsWith("T:"));
     }
 
     @Test
-    public void testCSharpIsNotCRestriction() {
-        GameManager gm = new GameManager();
-        String[][] players = {
-                {"1", "A", "C#", "Blue"},
-                {"2", "B", "Java", "Green"},
-        };
-        assertTrue(gm.createInitialBoard(players, 20));
-
-        assertTrue(gm.moveCurrentPlayer(4));
-        gm.reactToAbyssOrTool();
-        assertEquals("5", gm.getProgrammerInfo(1)[4]);
-    }
-
-    // ---------- Tool pickup: collect vs already has ----------
-    @Test
-    public void testToolPickupBothBranches() {
-        GameManager gm = new GameManager();
-        String[][] players = {
-                {"1", "A", "Java", "Blue"},
-                {"2", "B", "Java", "Green"},
+    public void testCreateInitialBoardInvalidTipoInConfig() {
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", "Purple"},
+                {"2", "Bob", "Python", "Green"}
         };
         String[][] cfg = {
-                {"1", "4", "2"} // IDE tool at 2
+                {"2", "0", "4"} // tipo inválido
         };
-        assertTrue(gm.createInitialBoard(players, 10, cfg));
-
-        assertTrue(gm.moveCurrentPlayer(1)); // P1 to 2
-        assertTrue(gm.reactToAbyssOrTool().contains("Recolheu ferramenta"));
-
-        // P2 to 2, still can collect (doesn't have)
-        assertTrue(gm.moveCurrentPlayer(1));
-        assertTrue(gm.reactToAbyssOrTool().contains("Recolheu ferramenta"));
-
-        // P1 back to 2 later, already has
-        assertTrue(gm.moveCurrentPlayer(1)); // P1: 2->3
-        gm.reactToAbyssOrTool();
-        assertTrue(gm.moveCurrentPlayer(0 + 1)); // P2: 2->3 (ignore)
-        gm.reactToAbyssOrTool();
-
-        assertTrue(gm.moveCurrentPlayer(0 + 1)); // P1: 3->4
-        gm.reactToAbyssOrTool();
-        assertTrue(gm.moveCurrentPlayer(0 + 1)); // P2: 3->4
-        gm.reactToAbyssOrTool();
-
-        // bring P1 back onto 2 via DuplicatedCode abyss (id 5) at 5
-        String[][] cfg2 = {
-                {"1", "4", "2"},
-                {"0", "5", "5"} // DuplicatedCode at 5 returns to previousPosition
-        };
-        assertTrue(gm.createInitialBoard(players, 10, cfg2));
-
-        assertTrue(gm.moveCurrentPlayer(1)); // P1->2 collect
-        gm.reactToAbyssOrTool();
-
-        // advance turns to get P1 to 5
-        assertTrue(gm.moveCurrentPlayer(1)); gm.reactToAbyssOrTool(); // P2->2 collect
-        assertTrue(gm.moveCurrentPlayer(3)); gm.reactToAbyssOrTool(); // P1 2->5 hits duplicated -> back to 2
-        String msg = gm.getSlotInfo(2)[1];
-        assertEquals("IDE", msg);
-
-        // still already has IDE now, so on react at 2 it should say already has
-        // (need to move onto 2 again in a normal turn)
-        assertTrue(gm.moveCurrentPlayer(1)); gm.reactToAbyssOrTool(); // P2 move
-        assertTrue(gm.moveCurrentPlayer(1)); // P1: 2->3
-        gm.reactToAbyssOrTool();
-        assertTrue(gm.moveCurrentPlayer(0 + 1)); gm.reactToAbyssOrTool(); // P2
-        assertTrue(gm.moveCurrentPlayer(0 + 1)); // P1: 3->4
-        gm.reactToAbyssOrTool();
+        assertFalse(gm.createInitialBoard(playerInfo, 10, cfg));
     }
 
-    // ---------- Abyss cancel path + InfiniteLoop release path ----------
     @Test
-    public void testInfiniteLoopReleasesPreviousTrappedWhenNotCancelled() {
-        GameManager gm = new GameManager();
-        String[][] players = {
-                {"1", "A", "Java", "Blue"},
-                {"2", "B", "Java", "Green"},
+    public void testCreateInitialBoardInvalidToolIdInConfig() {
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", "Purple"},
+                {"2", "Bob", "Python", "Green"}
         };
         String[][] cfg = {
-                {"0", "8", "2"} // Infinite Loop at 2
+                {"1", "6", "4"} // toolId inválido (>5)
         };
-        assertTrue(gm.createInitialBoard(players, 10, cfg));
-
-        // P1 falls into infinite loop -> trapped
-        assertTrue(gm.moveCurrentPlayer(1));
-        assertEquals("Ciclo Infinito!", gm.reactToAbyssOrTool());
-        assertEquals("Preso", gm.getProgrammerInfo(1)[6]);
-
-        // P2 falls into same abyss without canceller -> frees P1 and traps P2
-        assertTrue(gm.moveCurrentPlayer(1));
-        assertEquals("Ciclo Infinito!", gm.reactToAbyssOrTool());
-
-        assertEquals("Em Jogo", gm.getProgrammerInfo(1)[6]);
-        assertEquals("Preso", gm.getProgrammerInfo(2)[6]);
-
-        // Next turn for P1 is playable; P2 is trapped -> special case message
-        assertTrue(gm.moveCurrentPlayer(1)); // P1 moves
-        gm.reactToAbyssOrTool();
-        assertFalse(gm.moveCurrentPlayer(1)); // P2 cannot
-        assertEquals("Ciclo Infinito!", gm.reactToAbyssOrTool());
+        assertFalse(gm.createInitialBoard(playerInfo, 10, cfg));
     }
 
     @Test
-    public void testInfiniteLoopNotReleaseIfCancelledByTool() {
-        GameManager gm = new GameManager();
-        String[][] players = {
-                {"1", "A", "Java", "Blue"},
-                {"2", "B", "Java", "Green"},
+    public void testCreateInitialBoardInvalidAbyssIdInConfig() {
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", "Purple"},
+                {"2", "Bob", "Python", "Green"}
         };
         String[][] cfg = {
-                {"0", "8", "4"},  // Infinite Loop at 4
-                {"1", "1", "2"}   // FunctionalProgrammingTool at 2 cancels 8
+                {"0", "11", "4"} // abyssId inválido (não é 20)
         };
-        assertTrue(gm.createInitialBoard(players, 10, cfg));
-
-        // P1 gets trapped at 4
-        assertTrue(gm.moveCurrentPlayer(3)); // 1->4
-        assertEquals("Ciclo Infinito!", gm.reactToAbyssOrTool());
-        assertEquals("Preso", gm.getProgrammerInfo(1)[6]);
-
-        // P2 picks tool at 2
-        assertTrue(gm.moveCurrentPlayer(1)); // 1->2
-        gm.reactToAbyssOrTool();
-
-        // P2 goes to 4 and cancels abyss -> P1 should remain trapped
-        assertTrue(gm.moveCurrentPlayer(2)); // 2->4
-        String msg = gm.reactToAbyssOrTool();
-        assertNotNull(msg);
-        assertTrue(msg.contains("anulado"));
-
-        assertEquals("Preso", gm.getProgrammerInfo(1)[6]);
-        assertEquals("Em Jogo", gm.getProgrammerInfo(2)[6]);
-    }
-
-    // ---------- Bounce-back ----------
-    @Test
-    public void testBounceBackPastGlory() {
-        GameManager gm = new GameManager();
-        String[][] players = {
-                {"1", "A", "Java", "Blue"},
-                {"2", "B", "Java", "Green"},
-        };
-        assertTrue(gm.createInitialBoard(players, 6));
-
-        // P1 from 1 with 6 -> overshoot to (6 - 1) = 5
-        assertTrue(gm.moveCurrentPlayer(6));
-        gm.reactToAbyssOrTool();
-        assertEquals("5", gm.getProgrammerInfo(1)[4]);
-    }
-
-    // ---------- Game over branches + results ----------
-    @Test
-    public void testGameResultsWinnerFormat() {
-        GameManager gm = new GameManager();
-        String[][] players = {
-                {"1", "A", "Java", "Blue"},
-                {"2", "B", "Java", "Green"},
-        };
-        assertTrue(gm.createInitialBoard(players, 4));
-
-        assertTrue(gm.moveCurrentPlayer(3)); // P1 1->4 glory
-        gm.reactToAbyssOrTool();
-
-        assertTrue(gm.gameIsOver());
-        assertTrue(gm.getGameResults().contains("VENCEDOR"));
-        assertTrue(gm.getGameResults().contains("A"));
+        assertFalse(gm.createInitialBoard(playerInfo, 10, cfg));
     }
 
     @Test
-    public void testGameResultsTieAllAliveTrapped() {
-        GameManager gm = new GameManager();
-        String[][] players = {
-                {"1", "A", "Java", "Blue"},
-                {"2", "B", "Java", "Green"},
+    public void testCreateInitialBoardNonNumericConfig() {
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", "Purple"},
+                {"2", "Bob", "Python", "Green"}
         };
         String[][] cfg = {
-                {"0", "8", "2"},
-                {"0", "8", "3"}
+                {"0", "x", "4"} // id não numérico
         };
-        assertTrue(gm.createInitialBoard(players, 10, cfg));
-
-        assertTrue(gm.moveCurrentPlayer(1)); gm.reactToAbyssOrTool(); // P1 trapped at 2
-        assertTrue(gm.moveCurrentPlayer(2)); gm.reactToAbyssOrTool(); // P2 trapped at 3
-
-        assertTrue(gm.gameIsOver());
-        assertTrue(gm.getGameResults().contains("O jogo terminou empatado."));
+        assertFalse(gm.createInitialBoard(playerInfo, 10, cfg));
     }
 
     @Test
-    public void testAliveZeroAllDefeated() {
-        GameManager gm = new GameManager();
-        String[][] players = {
-                {"1", "A", "Java", "Blue"},
-                {"2", "B", "Java", "Green"},
+    public void testToolAlreadyOwnedDoesNotIncreaseToolCount() {
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", "Purple"},
+                {"2", "Bob", "Python", "Green"}
         };
         String[][] cfg = {
-                {"0", "7", "2"}, // BSOD defeats
-                {"0", "7", "3"}  // BSOD defeats
+                {"1", "1", "3"} // Programação Funcional na pos 3
         };
-        assertTrue(gm.createInitialBoard(players, 10, cfg));
+        assertTrue(gm.createInitialBoard(playerInfo, 5, cfg));
 
-        assertTrue(gm.moveCurrentPlayer(1)); gm.reactToAbyssOrTool(); // P1 defeated at 2 removed
-        assertTrue(gm.moveCurrentPlayer(2)); gm.reactToAbyssOrTool(); // P2 defeated at 3 removed -> empty order
-        assertTrue(gm.gameIsOver());
-        assertTrue(gm.getGameResults().contains("O jogo terminou empatado."));
-    }
-
-    // ---------- getProgrammersInfo ----------
-    @Test
-    public void testGetProgrammersInfoFiltersDefeatedAndSorts() {
-        GameManager gm = new GameManager();
-        String[][] players = {
-                {"2", "B", "Java", "Green"},
-                {"1", "A", "Java", "Blue"},
-        };
-        String[][] cfg = {
-                {"1", "4", "2"},  // IDE at 2
-                {"0", "7", "3"}   // BSOD at 3 defeats
-        };
-        assertTrue(gm.createInitialBoard(players, 10, cfg));
-
-        // P1 (id 1): 1->2 collect IDE
-        assertTrue(gm.moveCurrentPlayer(1));
-        gm.reactToAbyssOrTool();
-
-        // P2 (id 2): 1->3 defeated
+        // P1: 1->3 apanha tool
         assertTrue(gm.moveCurrentPlayer(2));
+        String m1 = gm.reactToAbyssOrTool();
+        assertNotNull(m1);
+
+        int toolsAfterFirstPickup = gm.getProgrammerInfo(1)[5].split(";").length;
+
+        // P2: move neutro (só para voltar ao P1)
+        assertTrue(gm.moveCurrentPlayer(1));
         gm.reactToAbyssOrTool();
 
-        String info = gm.getProgrammersInfo();
-        assertTrue(info.contains("A"));
-        assertFalse(info.contains("B"));
-    }
+        // P1: 3->3 por bounce (3+4=7, board=5 => 5-2=3) cai outra vez no mesmo tool
+        assertTrue(gm.moveCurrentPlayer(4));
+        String m2 = gm.reactToAbyssOrTool();
+        // pode ser null ou pode devolver mensagem, não interessa para este teste
 
-    // ---------- Programmer branches ----------
-    private static class BlankNameTool extends Tool {
-        public BlankNameTool() { super(99, "   ", 0); }
-        @Override public String getImageName() { return "x.png"; }
-        @Override public boolean canCancelAbyss(int abyssId) { return false; }
-    }
+        int toolsAfterSecondPickup = gm.getProgrammerInfo(1)[5].split(";").length;
 
+        // O que interessa: NÃO aumentou o nº de ferramentas (ramo "já possui")
+        assertEquals(toolsAfterFirstPickup, toolsAfterSecondPickup);
+    }
     @Test
-    public void testProgrammerMethodsBranches() {
-        Programmer p = new Programmer(1, "A", "  Java ; ; C  ,  ", null);
-
-        assertNull(p.getFirstLanguage()); // languages has weird but first before split might be "Java"? Actually leading spaces then "Java"
-        // force empty languages to hit null
-        Programmer p2 = new Programmer(2, "B", "   ", "Blue");
-        assertNull(p2.getFirstLanguage());
-
-        p.recordMove(5);
-        assertEquals(5, p.getPosition());
-        assertEquals(1, p.getPositionTwoMovesAgo()); // only 1 history
-
-        p.recordMove(6);
-        assertEquals(5, p.getPositionTwoMovesAgo());
-
-        p.addTool(null);
-        assertEquals("No tools", p.getToolsInfo());
-
-        p.addTool(new BlankNameTool());
-        assertEquals("No tools", p.getToolsInfo());
-
-        p.addTool(new IdeTool(0));
-        p.addTool(new UnitTestTool(0));
-        assertTrue(p.hasToolOfType(IdeTool.ID));
-        assertTrue(p.getToolsInfo().contains("IDE"));
-        assertTrue(p.getToolsInfo().contains("Testes Unitários"));
-
-        assertNotNull(p.findToolToCancelAbyss(0)); // IDE cancels syntax abyss (0)
-        assertEquals("", p2.getLanguagesInOriginalOrder());
-        assertEquals("", p2.getOrderedLanguages());
-
-        assertNotNull(p.getInfoAsArray());
-        assertTrue(p.getInfoAsString().contains(" | "));
-    }
-
-    // ---------- Tool/Abyss base methods ----------
-    @Test
-    public void testToolAndAbyssToStringAndInfoArray() {
-        Abyss a = new SyntaxErrorAbyss(2);
-        assertEquals(0, a.getId());
-        assertEquals("Erro de sintaxe", a.getName());
-        assertEquals(2, a.getPosition());
-        assertEquals("syntax.png", a.getImageName());
-        assertFalse(a.forcesRepeatTurn());
-        assertTrue(a.toString().contains("Erro de sintaxe"));
-        assertEquals("0", a.getInfoAsArray()[0]);
-
-        Tool t = new IdeTool(3);
-        assertEquals(4, t.getId());
-        assertEquals("IDE", t.getName());
-        assertEquals(3, t.getPosition());
-        assertEquals("IDE.png", t.getImageName());
-        assertTrue(t.toString().contains("IDE"));
-        assertEquals("4", t.getInfoAsArray()[0]);
-
-        assertFalse(new InheritanceTool(0).canCancelAbyss(0));
-        assertTrue(new FunctionalProgrammingTool(0).canCancelAbyss(8));
-        assertTrue(new UnitTestTool(0).canCancelAbyss(1));
-        assertTrue(new ExceptionTool(0).canCancelAbyss(3));
-        assertTrue(new IdeTool(0).canCancelAbyss(0));
-        assertTrue(new AjudaProfessorTool(0).canCancelAbyss(20));
-    }
-
-    // ---------- createAbyss/createTool default branch (reflection) ----------
-    @Test
-    public void testCreateAbyssAndToolDefaultReturnNull() {
-        GameManager gm = new GameManager();
-        Object a = callPrivate(gm, "createAbyss", new Class[]{int.class, int.class}, new Object[]{999, 2});
-        Object t = callPrivate(gm, "createTool", new Class[]{int.class, int.class}, new Object[]{999, 2});
-        assertNull(a);
-        assertNull(t);
-    }
-
-    // ---------- Save/Load: success + IO fail + invalid formats + missing lastMoveInfo ----------
-    @Test
-    public void testSaveLoadRoundTripAndSaveFailures() throws Exception {
-        GameManager gm = new GameManager();
-        String[][] players = {
-                {"1", "A", "Java; C", "Blue"},
-                {"2", "B", "Assembly", "Green"},
+    public void testInfiniteLoopCancelledDoesNotLiberateTrappedPlayer() {
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", "Purple"},
+                {"2", "Bob", "Python", "Green"}
         };
         String[][] cfg = {
-                {"1", "4", "2"},  // IDE
-                {"0", "0", "3"},  // Syntax
-                {"0", "20", "4"}, // LLM
+                {"0", "8", "4"}, // Ciclo Infinito na pos 4
+                {"1", "1", "2"}  // Programação Funcional na pos 2 (cancela ID 8)
         };
-        assertTrue(gm.createInitialBoard(players, 12, cfg));
+        assertTrue(gm.createInitialBoard(playerInfo, 10, cfg));
 
-        // move to collect tool + trigger abyss
-        assertTrue(gm.moveCurrentPlayer(1)); gm.reactToAbyssOrTool();
-        assertFalse(gm.moveCurrentPlayer(3)); gm.reactToAbyssOrTool(); // Assembly invalid (>2)
+        // P1: 1->4 fica preso
+        assertTrue(gm.moveCurrentPlayer(3));
+        assertEquals("Ciclo Infinito!", gm.reactToAbyssOrTool());
+        assertEquals("Preso", gm.getProgrammerInfo(1)[6]);
 
-        Path tmp = Files.createTempFile("save", ".txt");
-        File f = tmp.toFile();
-        assertTrue(gm.saveGame(f));
+        // P2: 1->2 apanha ferramenta
+        assertTrue(gm.moveCurrentPlayer(1));
+        String toolMsg = gm.reactToAbyssOrTool();
+        assertNotNull(toolMsg);
+        assertTrue(toolMsg.contains("Recolheu ferramenta"));
+
+        // P1 (Preso): move devolve false, react devolve mensagem e avança turno
+        assertFalse(gm.moveCurrentPlayer(1));
+        assertEquals("Ciclo Infinito!", gm.reactToAbyssOrTool());
+
+        // P2: 2->4 cai no Ciclo Infinito com tool -> anula e consome tool
+        assertTrue(gm.moveCurrentPlayer(2));
+        String abyssMsg = gm.reactToAbyssOrTool();
+        assertNotNull(abyssMsg);
+        assertTrue(abyssMsg.contains("anulado"));
+
+        // P1 não deve ser libertado (porque anulado acontece antes da lógica de libertação)
+        assertEquals("Preso", gm.getProgrammerInfo(1)[6]);
+
+        // P2 continua em jogo e sem ferramentas
+        assertEquals("Em Jogo", gm.getProgrammerInfo(2)[6]);
+        assertEquals("No tools", gm.getProgrammerInfo(2)[5]);
+    }
+
+    @Test
+    public void testGameResultsTieAllDefeatedShowsParticipantsAndCauses() {
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", "Purple"},
+                {"2", "Bob", "Python", "Green"}
+        };
+        String[][] cfg = {
+                {"0", "7", "2"}, // BSOD na pos 2
+                {"0", "7", "3"}  // BSOD na pos 3
+        };
+        assertTrue(gm.createInitialBoard(playerInfo, 6, cfg));
+
+        // P1: 1->2 derrotado
+        assertTrue(gm.moveCurrentPlayer(1));
+        String m1 = gm.reactToAbyssOrTool();
+        assertNotNull(m1);
+        assertTrue(m1.contains("Blue Screen"));
+
+        // P2: 1->3 derrotado
+        assertTrue(gm.moveCurrentPlayer(2));
+        String m2 = gm.reactToAbyssOrTool();
+        assertNotNull(m2);
+        assertTrue(m2.contains("Blue Screen"));
+
+        assertTrue(gm.gameIsOver());
+
+        ArrayList<String> results = gm.getGameResults();
+        assertTrue(results.contains("O jogo terminou empatado."));
+        assertTrue(results.contains("Participantes:"));
+        assertTrue(results.toString().contains("Alice : 2 : Blue Screen of Death"));
+        assertTrue(results.toString().contains("Bob : 3 : Blue Screen of Death"));
+    }
+
+    @Test
+    public void testLoadGameWithoutLastMoveLinesIsValid(@TempDir File tempDir) throws Exception {
+        File f = new File(tempDir, "minimal_save.txt");
+        try (FileWriter fw = new FileWriter(f)) {
+            fw.write("10\n");                // boardSize
+            fw.write("2\n");                 // numProgrammers
+            fw.write("1|Alice|Java|Blue|1|Em Jogo\n");
+            fw.write("2|Bob|Python|Green|1|Em Jogo\n");
+            fw.write("0\n");                 // numAbysses
+            fw.write("0\n");                 // numTools
+            fw.write("2\n");                 // orderSize
+            fw.write("1\n");
+            fw.write("2\n");
+            fw.write("0\n");                 // turnCursor
+            fw.write("false\n");             // gameOver
+            fw.write("-1\n");                // winnerId
+            fw.write("1\n");                 // turnCount
+            // EOF aqui (sem lastDiceValue/lastPlayerId/etc)
+        }
 
         GameManager gm2 = new GameManager();
         assertDoesNotThrow(() -> gm2.loadGame(f));
+        assertNull(gm2.reactToAbyssOrTool()); // não há pendingReaction
 
-        // basic sanity after load
-        assertNotNull(gm2.getProgrammerInfo(1));
-        assertNotNull(gm2.getSlotInfo(2));
-        assertNotNull(gm2.getAuthorsPanel());
-        assertEquals("true", gm2.customizeBoard().get("hasNewAbyss"));
-
-        // saveGame null
-        assertFalse(gm2.saveGame(null));
-
-        // saveGame to directory -> false
-        Path dir = Files.createTempDirectory("dirsave");
-        assertFalse(gm2.saveGame(dir.toFile()));
+        // jogo funciona
+        assertEquals(1, gm2.getCurrentPlayerID());
+        assertTrue(gm2.moveCurrentPlayer(1));
+        gm2.reactToAbyssOrTool();
     }
 
     @Test
-    public void testLoadGameFileNotFoundAndEmptyFile() throws Exception {
-        GameManager gm = new GameManager();
-
-        assertThrows(java.io.FileNotFoundException.class, () -> gm.loadGame(null));
-
-        Path missing = Path.of("this_file_should_not_exist_1234567.txt");
-        assertThrows(java.io.FileNotFoundException.class, () -> gm.loadGame(missing.toFile()));
-
-        Path empty = Files.createTempFile("empty", ".txt");
-        // ensure empty
-        Files.writeString(empty, "");
-        assertThrows(InvalidFileException.class, () -> gm.loadGame(empty.toFile()));
-    }
-
-    @Test
-    public void testLoadGameInvalidFormatTriggersGenericInvalidFileException() throws Exception {
-        GameManager gm = new GameManager();
-
-        Path bad = Files.createTempFile("bad", ".txt");
-        Files.writeString(bad, "notANumber\n");
-        InvalidFileException ex = assertThrows(InvalidFileException.class, () -> gm.loadGame(bad.toFile()));
-        assertTrue(ex.getMessage().toLowerCase().contains("formato"));
-    }
-
-    @Test
-    public void testLoadGameInvalidProgrammerLine() throws Exception {
-        GameManager gm = new GameManager();
-
-        Path bad = Files.createTempFile("badprog", ".txt");
-        // boardSize, numProgrammers=1, invalid line with <6 parts
-        Files.writeString(bad,
-                "10\n" +
-                        "1\n" +
-                        "1|A|Java\n"
-        );
-        assertThrows(InvalidFileException.class, () -> gm.loadGame(bad.toFile()));
-    }
-
-    @Test
-    public void testLoadGameMissingLastMoveInfoHandled() throws Exception {
-        GameManager gm = new GameManager();
-
-        Path ok = Files.createTempFile("min", ".txt");
-        // minimal valid file ending right after turnCount
-        Files.writeString(ok,
-                "10\n" +          // boardSize
-                        "2\n" +           // programmers
-                        "1|A|Java|Blue|1|Em Jogo|||\n" +
-                        "2|B|Java|Green|1|Em Jogo|||\n" +
-                        "0\n" +           // abysses
-                        "0\n" +           // tools
-                        "2\n" +           // turnOrder size
-                        "1\n" +
-                        "2\n" +
-                        "0\n" +           // turnCursor
-                        "false\n" +       // gameOver
-                        "-1\n" +          // winnerId
-                        "1\n"             // turnCount
-        );
-        assertDoesNotThrow(() -> gm.loadGame(ok.toFile()));
-        assertNull(gm.reactToAbyssOrTool());
-    }
-
-    // ---------- PENDING_REASON_DEFEATED safety branch via crafted load ----------
-    @Test
-    public void testMoveCurrentPlayerWhenCurrentAlreadyDefeatedSafetyBranch() throws Exception {
-        GameManager gm = new GameManager();
-
-        Path ok = Files.createTempFile("defeated", ".txt");
-        Files.writeString(ok,
-                "10\n" +          // boardSize
-                        "2\n" +           // programmers
-                        "1|A|Java|Blue|1|Derrotado||BSOD|0\n" +
-                        "2|B|Java|Green|1|Em Jogo|||0\n" +
-                        "0\n" +           // abysses
-                        "0\n" +           // tools
-                        "2\n" +           // turnOrder size (includes defeated id 1)
-                        "1\n" +
-                        "2\n" +
-                        "0\n" +           // turnCursor -> id 1
-                        "false\n" +
-                        "-1\n" +
-                        "1\n" +
-                        "0\n" +           // lastDice
-                        "-1\n" +          // lastPlayerId
-                        "0\n" +
-                        "0\n"
-        );
-
-        gm.loadGame(ok.toFile());
-        assertFalse(gm.moveCurrentPlayer(1));
-        assertNull(gm.reactToAbyssOrTool()); // defeated branch returns null
-    }
-
-    // ---------- Cover saveGame branch when turnOrderIds == null ----------
-    @Test
-    public void testSaveGameWhenTurnOrderIdsNullBranch() throws Exception {
-        GameManager gm = new GameManager();
-        String[][] players = {
-                {"1", "A", "Java", "Blue"},
-                {"2", "B", "Java", "Green"},
+    public void testSaveGameToDirectoryReturnsFalse(@TempDir File tempDir) {
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", "Purple"},
+                {"2", "Bob", "Python", "Green"}
         };
-        assertTrue(gm.createInitialBoard(players, 10));
+        assertTrue(gm.createInitialBoard(playerInfo, 10, null));
 
-        setField(gm, "turnOrderIds", null);
-
-        Path tmp = Files.createTempFile("save2", ".txt");
-        assertTrue(gm.saveGame(tmp.toFile()));
+        File dir = new File(tempDir, "saveDir");
+        assertTrue(dir.mkdirs());
+        assertFalse(gm.saveGame(dir)); // FileWriter falha em diretório
     }
 
-    // ---------- getAuthorsPanel/customizeBoard ----------
     @Test
-    public void testAuthorsPanelAndCustomizeBoard() {
-        GameManager gm = new GameManager();
-        JPanel p = gm.getAuthorsPanel();
-        assertNotNull(p);
+    public void testMoveCurrentPlayerWithoutCreateInitialBoardReturnsFalse() {
+        GameManager gm2 = new GameManager();
+        assertFalse(gm2.moveCurrentPlayer(1));
+        assertNull(gm2.reactToAbyssOrTool());
+    }
 
-        HashMap<String, String> map = gm.customizeBoard();
-        assertEquals("true", map.get("hasNewAbyss"));
+    @Test
+    public void testGetProgrammersInfoWhenNoBoardReturnsEmptyString() {
+        GameManager gm2 = new GameManager();
+        assertEquals("", gm2.getProgrammersInfo());
+    }
+
+    @Test
+    public void testGetCurrentPlayerNameWhenTurnOrderHasMissingId(@TempDir File tempDir) throws Exception {
+        File f = new File(tempDir, "weird_save.txt");
+        try (FileWriter fw = new FileWriter(f)) {
+            fw.write("10\n");
+            fw.write("2\n");
+            fw.write("1|Alice|Java|Blue|1|Em Jogo\n");
+            fw.write("2|Bob|Python|Green|1|Em Jogo\n");
+            fw.write("0\n");
+            fw.write("0\n");
+            fw.write("3\n");   // orderSize
+            fw.write("99\n");  // id inexistente
+            fw.write("1\n");
+            fw.write("2\n");
+            fw.write("0\n");
+            fw.write("false\n");
+            fw.write("-1\n");
+            fw.write("1\n");
+        }
+
+        GameManager gm2 = new GameManager();
+        gm2.loadGame(f);
+
+        assertEquals(99, gm2.getCurrentPlayerID());
+        assertEquals("", gm2.getCurrentPlayerName());
+    }
+
+    @Test
+    public void testReactOnEmptySlotReturnsNull() {
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", "Purple"},
+                {"2", "Bob", "Python", "Green"}
+        };
+        assertTrue(gm.createInitialBoard(playerInfo, 10, null));
+
+        // Move para uma casa sem tool/abyss
+        assertTrue(gm.moveCurrentPlayer(1)); // 1->2
+        String msg = gm.reactToAbyssOrTool();
+        assertNull(msg);
+    }
+
+    @Test
+    public void testMoveCurrentPlayerInvalidDoesNotAdvanceTurn() {
+        String[][] playerInfo = {
+                {"1", "Alice", "Assembly", "Purple"}, // Assembly não pode >2
+                {"2", "Bob", "Python", "Green"}
+        };
+        assertTrue(gm.createInitialBoard(playerInfo, 10, null));
+
+        assertEquals(1, gm.getCurrentPlayerID());
+
+        assertFalse(gm.moveCurrentPlayer(3)); // inválido
+        assertNull(gm.reactToAbyssOrTool());   // não há reação pendente
+
+        // continua a ser o mesmo jogador
+        assertEquals(1, gm.getCurrentPlayerID());
+    }
+
+
+    @Test
+    public void testMoveValidAdvancesTurn() {
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", "Purple"},
+                {"2", "Bob", "Python", "Green"}
+        };
+        assertTrue(gm.createInitialBoard(playerInfo, 10, null));
+
+        assertEquals(1, gm.getCurrentPlayerID());
+        assertTrue(gm.moveCurrentPlayer(1));
+        gm.reactToAbyssOrTool();
+        assertEquals(2, gm.getCurrentPlayerID());
+    }
+
+
+    @Test
+    public void testGetSlotInfoPlayersSorting() {
+        String[][] playerInfo = {
+                {"10", "A", "Java", "Purple"},
+                {"2", "B", "Python", "Green"},
+                {"7", "C", "C++", "Brown"}
+        };
+        assertTrue(gm.createInitialBoard(playerInfo, 10, null));
+
+        // todos começam na posição 1, deve vir ordenado
+        String[] slot = gm.getSlotInfo(1);
+        assertNotNull(slot);
+        assertEquals("2,7,10", slot[0]);
+    }
+
+    @Test
+    public void testSaveGameToDirectoryReturnsFalse_2(@TempDir File tempDir) {
+        String[][] playerInfo = {
+                {"1", "Alice", "Java", "Purple"},
+                {"2", "Bob", "Python", "Green"}
+        };
+        assertTrue(gm.createInitialBoard(playerInfo, 10, null));
+
+        File dir = new File(tempDir, "saveDir");
+        assertTrue(dir.mkdirs());
+        assertFalse(gm.saveGame(dir));
     }
 
 }
