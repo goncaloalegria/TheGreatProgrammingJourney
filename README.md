@@ -1,14 +1,14 @@
 # The Great Programming Journey
 
-## 👤 Autor
+## - Autor
 - Gonçalo Alegria — a22408663
 
-## 🛠️ Linguagem Utilizada
+## - Linguagem Utilizada
 - Java 20
 
 ---
 
-## 🧩 Enquadramento do Projeto
+## - Enquadramento do Projeto
 Este projeto foi desenvolvido no âmbito da unidade curricular **Linguagens de Programação II**, da **Universidade Lusófona de Humanidades e Tecnologias**.
 
 O principal objetivo do trabalho é aplicar conceitos fundamentais de **Programação Orientada a Objetos (POO)**, nomeadamente:
@@ -26,7 +26,7 @@ Foram implementados requisitos funcionais como:
 
 ---
 
-## 🧠 Modelo de Classes (UML)
+## - Modelo de Classes - UML
 Abaixo encontra-se o diagrama UML desenvolvido para representar a estrutura principal do projeto:
 
 ![Diagrama UML do projeto](DiagramaUML.png)
@@ -40,12 +40,12 @@ A relação parte do **GameManager** para **Abyss/Tool** porque é o GameManager
 
 ---
 
-## 🎥 Vídeo
-- URL: COLOCA_AQUI_O_LINK_DO_VIDEO
+## - Vídeo
+- URL: (https://youtu.be/6haa-eV5nGU)
 
 ---
 
-## ✨ Componente de Criatividade
+## - Componente de Criatividade
 A componente de criatividade implementada foi o **abismo `StackOverflowAbyss`**, inspirado na situação em que um programador fica “preso” a procurar soluções e acaba por perder progresso.
 
 Quando um jogador cai neste abismo, o jogo calcula quantas **ferramentas** o programador tem no momento. Se tiver ferramentas, o jogador recua um número de casas **igual ao número de ferramentas**; se não tiver nenhuma, recua **1** casa. De seguida, o jogador **perde todas as ferramentas** (são removidas do inventário). A nova posição nunca pode ficar abaixo da **casa 1**: se o recuo ultrapassar o início do tabuleiro, o jogador é colocado na posição 1. Este abismo **não força repetição de turno**.
