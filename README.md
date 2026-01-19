@@ -22,7 +22,6 @@ Foram implementados requisitos funcionais como:
 ---
 
 ## - Modelo de Classes - UML
-Abaixo encontra-se o diagrama UML desenvolvido para representar a estrutura principal do projeto:
 
 ![Diagrama UML do projeto](DiagramaUML.png)
 
