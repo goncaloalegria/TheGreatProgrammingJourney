@@ -25,7 +25,7 @@ Foram implementados requisitos funcionais como:
 
 ![Diagrama UML do projeto](DiagramaUML.png)
 
-### Comentários e justificações (máx. 3 parágrafos)
+### Comentários 
 O modelo foi estruturado à volta do **GameManager**, responsável por controlar o fluxo do jogo (ordem de turnos, movimentos, estado final e resultados). A informação e estado de cada jogador estão encapsulados em **Programmer**, mantendo os dados do jogador separados da lógica de controlo do jogo e reduzindo acoplamento.
 
 Os elementos especiais do tabuleiro foram modelados com herança: **Abyss** e **Tool** são classes abstratas que concentram atributos e operações comuns (como identificação, nome e posição), enquanto as subclasses representam variações concretas com comportamentos específicos. Isto permite estender o jogo com novos abismos/ferramentas sem alterar o núcleo do controlo do jogo, tirando partido de polimorfismo.
