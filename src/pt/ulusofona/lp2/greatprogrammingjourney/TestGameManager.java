@@ -1626,4 +1626,237 @@ public class TestGameManager {
         // Jogador não deve recuar (só recua se houver 2+)
         assertEquals("5", gm.getProgrammerInfo(1)[4]);
     }
+
+    @Test
+    public void testStackOverflowAbyssNullProgrammerDoesNothing() {
+        Abyss a = new StackOverflowAbyss(5);
+        assertDoesNotThrow(() -> a.applyEffect(null, 3, 1));
+        assertEquals("unknownPiece.png", a.getImageName());
+        assertFalse(a.forcesRepeatTurn());
+        assertEquals(10, a.getId());
+        assertEquals("Stack Overflow", a.getName());
+        assertEquals(5, a.getPosition());
+    }
+
+    @Test
+    public void testStackOverflowAbyssNoToolsRetreatsOneAndNeverBelowOne() {
+        Programmer p = new Programmer(1, "A", "Java", "Blue");
+        p.setPosition(1);
+
+        Abyss a = new StackOverflowAbyss(7);
+        a.applyEffect(p, 6, 1);
+
+        assertEquals(1, p.getPosition());
+        assertTrue(p.getTools().isEmpty());
+    }
+
+    @Test
+    public void testStackOverflowAbyssWithToolsClearsToolsAndRetreatsByToolCount() {
+        Programmer p = new Programmer(1, "A", "Java", "Blue");
+        p.setPosition(10);
+
+        p.addTool(new InheritanceTool(2));
+        p.addTool(new UnitTestTool(3));
+        p.addTool(new IdeTool(4));
+        assertEquals(3, p.getTools().size());
+
+        Abyss a = new StackOverflowAbyss(8);
+        a.applyEffect(p, 2, 9);
+
+        assertEquals(7, p.getPosition()); // 10 - 3
+        assertTrue(p.getTools().isEmpty());
+    }
+
+    // =========================
+    // LLM (ID 20) - branches do GameManager
+    // =========================
+
+    @Test
+    public void testLLMFirst3MovesWithAjudaProfessorCancelsAndConsumesTool() {
+        GameManager gm = new GameManager();
+
+        String[][] players = {
+                {"1", "Alice", "Java", "Blue"},
+                {"2", "Bob", "Java", "Green"}
+        };
+
+        String[][] cfg = {
+                {"1", "5", "2"},   // Tool Ajuda do Professor (ID 5) na pos 2
+                {"0", "20", "4"}   // Abyss LLM (ID 20) na pos 4
+        };
+
+        assertTrue(gm.createInitialBoard(players, 10, cfg));
+
+        // P1: 1 -> 2 (apanha Ajuda do Professor)
+        assertTrue(gm.moveCurrentPlayer(1));
+        gm.reactToAbyssOrTool();
+
+        // P2: jogada neutra
+        assertTrue(gm.moveCurrentPlayer(1));
+        gm.reactToAbyssOrTool();
+
+        // P1: 2 -> 4 (cai no LLM nas primeiras 3 jogadas, com ferramenta)
+        assertTrue(gm.moveCurrentPlayer(2));
+        String msg = gm.reactToAbyssOrTool();
+
+        assertNotNull(msg);
+        assertTrue(msg.contains("LLM"));
+        assertTrue(msg.contains("anulado"));
+        assertTrue(msg.contains("Ajuda"));
+
+        String[] infoP1 = gm.getProgrammerInfo(1);
+        assertEquals("4", infoP1[4]);               // ficou no sítio
+        assertEquals("No tools", infoP1[5]);        // ferramenta consumida
+    }
+
+    @Test
+    public void testLLMFirst3MovesWithoutToolReturnsToPreviousPosition() {
+        GameManager gm = new GameManager();
+
+        String[][] players = {
+                {"1", "Alice", "Java", "Blue"},
+                {"2", "Bob", "Java", "Green"}
+        };
+
+        String[][] cfg = {
+                {"0", "20", "4"}   // Abyss LLM (ID 20) na pos 4
+        };
+
+        assertTrue(gm.createInitialBoard(players, 10, cfg));
+
+        // P1: 1 -> 4 (cai no LLM na 1ª jogada, sem ferramenta)
+        assertTrue(gm.moveCurrentPlayer(3));
+        String msg = gm.reactToAbyssOrTool();
+
+        assertNotNull(msg);
+        assertTrue(msg.contains("LLM"));
+
+        String[] infoP1 = gm.getProgrammerInfo(1);
+        assertEquals("1", infoP1[4]); // voltou para a posição anterior (1)
+    }
+
+    @Test
+    public void testLLMOnOrAfter4thMoveForcesExtraAdvanceAndCollectsToolOnLanding() {
+        GameManager gm = new GameManager();
+
+        String[][] players = {
+                {"1", "Alice", "Java", "Blue"},
+                {"2", "Bob", "Java", "Green"}
+        };
+
+        String[][] cfg = {
+                {"0", "20", "8"},  // LLM na pos 8
+                {"1", "2", "11"}   // Tool Testes Unitários (ID 2) na pos 11 (para ser apanhada no avanço extra)
+        };
+
+        assertTrue(gm.createInitialBoard(players, 12, cfg));
+
+        // P1 move 1: 1->3
+        assertTrue(gm.moveCurrentPlayer(2));
+        gm.reactToAbyssOrTool();
+
+        // P2 neutro
+        assertTrue(gm.moveCurrentPlayer(1));
+        gm.reactToAbyssOrTool();
+
+        // P1 move 2: 3->4
+        assertTrue(gm.moveCurrentPlayer(1));
+        gm.reactToAbyssOrTool();
+
+        // P2 neutro
+        assertTrue(gm.moveCurrentPlayer(1));
+        gm.reactToAbyssOrTool();
+
+        // P1 move 3: 4->5
+        assertTrue(gm.moveCurrentPlayer(1));
+        gm.reactToAbyssOrTool();
+
+        // P2 neutro
+        assertTrue(gm.moveCurrentPlayer(1));
+        gm.reactToAbyssOrTool();
+
+        // P1 move 4: 5->8 (dado=3), LLM (moveCount>=4) força avanço extra +3 => 11 e apanha tool
+        assertTrue(gm.moveCurrentPlayer(3));
+        String msg = gm.reactToAbyssOrTool();
+
+        assertNotNull(msg);
+        assertTrue(msg.contains("LLM"));
+
+        String[] infoP1 = gm.getProgrammerInfo(1);
+        assertEquals("11", infoP1[4]);                  // avanço extra aplicado
+        assertTrue(infoP1[5].contains("Testes"));        // tool apanhada no forced move
+    }
+
+    // =========================
+    // Segmentation Fault (ID 9) - branch do GameManager
+    // =========================
+
+    @Test
+    public void testSegmentationFaultWithTwoPlayersRetreatsBothThreePositions() {
+        GameManager gm = new GameManager();
+
+        String[][] players = {
+                {"1", "Alice", "Java", "Blue"},
+                {"2", "Bob", "Java", "Green"}
+        };
+
+        String[][] cfg = {
+                {"0", "9", "4"} // Segmentation Fault na pos 4
+        };
+
+        assertTrue(gm.createInitialBoard(players, 10, cfg));
+
+        // P1: 1->4 (sozinho, nada além da mensagem)
+        assertTrue(gm.moveCurrentPlayer(3));
+        String msg1 = gm.reactToAbyssOrTool();
+        assertNotNull(msg1);
+        assertTrue(msg1.contains("Segmentation Fault"));
+
+        assertEquals("4", gm.getProgrammerInfo(1)[4]);
+
+        // P2: 1->4 (agora 2 jogadores na mesma casa, ambos recuam 3 => 1)
+        assertTrue(gm.moveCurrentPlayer(3));
+        String msg2 = gm.reactToAbyssOrTool();
+        assertNotNull(msg2);
+        assertTrue(msg2.contains("Segmentation Fault"));
+
+        assertEquals("1", gm.getProgrammerInfo(1)[4]);
+        assertEquals("1", gm.getProgrammerInfo(2)[4]);
+    }
+
+    // =========================
+    // Empate: todos vivos presos
+    // =========================
+
+    @Test
+    public void testGameEndsInTieWhenAllAlivePlayersAreTrapped() {
+        GameManager gm = new GameManager();
+
+        String[][] players = {
+                {"1", "Alice", "Java", "Blue"},
+                {"2", "Bob", "Java", "Green"}
+        };
+
+        String[][] cfg = {
+                {"0", "8", "2"}, // Ciclo Infinito na pos 2
+                {"0", "8", "3"}  // Ciclo Infinito na pos 3
+        };
+
+        assertTrue(gm.createInitialBoard(players, 10, cfg));
+
+        // P1: 1->2 (Preso)
+        assertTrue(gm.moveCurrentPlayer(1));
+        gm.reactToAbyssOrTool();
+
+        // P2: 1->3 (Preso)
+        assertTrue(gm.moveCurrentPlayer(2));
+        gm.reactToAbyssOrTool();
+
+        assertTrue(gm.gameIsOver());
+        assertNull(gm.getGameResults().isEmpty() ? null : null); // só para garantir que não crasha
+
+        assertTrue(gm.getGameResults().contains("O jogo terminou empatado."));
+    }
+
+
 }
