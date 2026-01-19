@@ -36,6 +36,7 @@ A relação parte do **GameManager** para **Abyss/Tool** porque é o GameManager
 
 ## - Vídeo
 - URL: (https://youtu.be/6haa-eV5nGU)
+  No inicio do video disse componente prática mas queria dizer componente criativa.
 
 ---
 
