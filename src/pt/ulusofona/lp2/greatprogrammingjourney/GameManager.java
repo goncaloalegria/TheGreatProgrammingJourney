@@ -662,7 +662,7 @@ public class GameManager {
             // Ferramenta permanece no tabuleiro - pode ser apanhada por outros
             return "Recolheu ferramenta: " + boardTool.getName();
         } else {
-            return "JÃƒÂ¡ possui a ferramenta: " + boardTool.getName();
+            return "Ja possui a ferramenta: " + boardTool.getName();
         }
     }
 
