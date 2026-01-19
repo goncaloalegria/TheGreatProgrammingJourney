@@ -3,11 +3,6 @@
 ## - Autor
 - Gonçalo Alegria — a22408663
 
-## - Linguagem Utilizada
-- Java 20
-
----
-
 ## - Enquadramento do Projeto
 Este projeto foi desenvolvido no âmbito da unidade curricular **Linguagens de Programação II**, da **Universidade Lusófona de Humanidades e Tecnologias**.
 
