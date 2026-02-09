@@ -13,6 +13,7 @@ public class Programmer {
     private String color;
     private int position;
     private String state;
+    //private int abyssFallCount = 0;
 
     private Deque<Integer> positionHistory;
     private List<Tool> tools;
@@ -39,6 +40,7 @@ public class Programmer {
     public String getLanguages() {
         return languages;
     }
+
 
     public String getColor() {
         return color;
@@ -69,8 +71,11 @@ public class Programmer {
     }
 
     public boolean isDefeated() {
-        return "Derrotado".equals(state);
+        return "Derrotado".equals(state) /*|| "Eliminado".equals(state)*/;
     }
+
+
+
 
     public boolean canPlay() {
         return isPlaying();
@@ -102,12 +107,17 @@ public class Programmer {
         this.position = newPosition;
     }
 
+
+    //positionHistory É um Deque (fila dupla) que guarda no máximo 2 posições.
     public int getPositionTwoMovesAgo() {
         if (positionHistory.size() < 2) {
             return 1;
         }
         return positionHistory.peekFirst();
     }
+
+
+
 
     public void addTool(Tool tool) {
         if (tool != null) {
@@ -125,6 +135,81 @@ public class Programmer {
         return tools;
     }
 
+    /*public int getAbyssFallCount() {
+        return abyssFallCount;
+    }*/
+
+   /* public void incrementAbyssFallCount() {
+        abyssFallCount++;
+    }*/
+
+    //retorna a posiçao do programador 5 (altera se for outtro valor)jogadas atrás
+    //alterar o valor no recorMove para guardar mais posiçoes, senão não funciona
+    // chamar no abismo como o professor tem no secondaryEffects
+    /*
+    public int getPositionFiveMovesAgo(){
+        if (positionHistory.size() < 5) {
+            return 1;
+        }
+        Integer[] historyArray = positionHistory.toArray(new Integer[0]);
+        return historyArray[historyArray.length - 5];
+    }
+    */
+
+    //reseta o programador para o estado inicial
+    /*
+    public void reset() {
+        this.position = 1;
+        this.state = "Em Jogo";
+        this.tools.clear();
+        this.positionHistory.clear();
+    }
+    */
+
+    //retorna o numero de ferramentas do programador
+    /*
+    public int getToolCount(){
+        return tools.size();
+    }
+    */
+
+
+
+    //limpa todas as ferramentas do programador
+    /*
+    public void clearTools() {
+        tools.clear();
+    }
+    */
+
+    // Remove todas as ferramentas de um determinado tipo (toolId)
+    /*
+    public void removeAllToolsOfType(int toolId){
+        tools.removeIf(tool -> tool != null && tool.getId() == toolId);
+
+    }
+    */
+
+
+    //Remove uma ferramenta aleatória do programador e a retorna.
+    //Retorna null se o programador não tiver ferramentas.
+    /*
+    public Tool removeRandomTool() {
+        if (tools == null || tools.isEmpty()) {
+            return null;
+        }
+
+        Random random = new Random();
+        int index = random.nextInt(tools.size());
+        Tool removed = tools.remove(index);
+        return removed;
+    }
+    */
+
+    public void removeAllTools() {
+        tools.clear();
+    }
+
     public boolean hasToolOfType(int toolId) {
         for (Tool tool : tools) {
             if (tool != null && tool.getId() == toolId) {
@@ -134,6 +219,8 @@ public class Programmer {
         return false;
     }
 
+    // Se quiser escolher a ferramenta de maior id primeiro, basta inverter a comparação
+    // if (bestTool == null || tool.getId() > bestTool.getId()) {
     public Tool findToolToCancelAbyss(int abyssId) {
         Tool bestTool = null;
 

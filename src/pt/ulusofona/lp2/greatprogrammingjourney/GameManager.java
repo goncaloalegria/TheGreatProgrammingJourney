@@ -111,7 +111,7 @@ public class GameManager {
         this.gameOver = false;
         this.winnerId = null;
 
-        // TurnCount: comeÃ§a no turno 1
+        // TurnCount: comeca no turno 1
         this.turnCount = 1;
 
         this.lastDiceValue = 0;
@@ -201,7 +201,7 @@ public class GameManager {
                     return false;
                 }
             } else {
-                if (id < 0 || id > 5) {
+                if (id < 0 || (id > 5 && id != 100)) {
                     return false;
                 }
             }
@@ -293,6 +293,22 @@ public class GameManager {
         return sb.toString();
     }
 
+    public List<String> getProgrammersBetweenPositions(int posicao1, int posicao2){
+        List<String> result = new ArrayList<>();
+
+        int min = Math.min(posicao1,posicao2);
+        int max = Math.max(posicao1,posicao2);
+
+        for (Programmer p : programmers){
+            int pos = p.getPosition();
+            if (pos >= min && pos <= max) {
+                result.add(p.getName() + " : " + pos);
+            }
+        }
+        return result;
+    }
+
+
     public String getImagePng(int position) {
         if (position < 1 || position > boardSize) {
             return null;
@@ -315,7 +331,7 @@ public class GameManager {
         return null;
     }
 
-    // âœ… ORDEM CORRETA (7 elementos):
+    // ORDEM CORRETA (7 elementos):
     // 0 ID, 1 Nome, 2 Linguagens, 3 Cor, 4 PosiÃ§Ã£o, 5 Ferramentas, 6 Estado
     public String[] getProgrammerInfo(int id) {
         Programmer programmer = idToProgrammer.get(id);
@@ -330,6 +346,8 @@ public class GameManager {
         String position = String.valueOf(programmer.getPosition());
         String tools = programmer.getToolsInfo();
         String state = programmer.getState();
+        //String toolCount = String.valueOf(programmer.getTool);
+        //String abyssCount = String.valueOf(programmer.getAbyssFallCount());
 
         return new String[]{idStr, name, languages, color, position, tools, state};
     }
@@ -348,6 +366,8 @@ public class GameManager {
         String tools = programmer.getToolsInfo();
         String languages = programmer.getOrderedLanguages();
         String state = programmer.getState();
+        // String toolCount = String.valueOf(programmer.getToolCount());
+        //String abyssCount = String.valueOf(programmer.getAbyssFallCount());
 
         return idStr + " | " + name + " | " + position + " | " + tools + " | " + languages + " | " + state;
     }
@@ -421,7 +441,16 @@ public class GameManager {
             return new String[]{programmersStr, tool.getName(), "T:" + tool.getId()};
         }
 
-        return new String[]{programmersStr, "", ""};
+        int count = 0;
+        for (Programmer p : programmers){
+            if(p.getPosition() == position){
+                count ++;
+            }
+
+        }
+        return new String[]{programmersStr , "", "V:" + count};
+
+
     }
 
     public int getCurrentPlayerID() {
@@ -456,12 +485,12 @@ public class GameManager {
 
     /**
      * moveCurrentPlayer:
-     * - NÃƒO avanÃ§a turnCursor (isso Ã© no react)
+     * - Nao avanca turnCursor (isso so no react)
      * - Se o jogador estiver Preso/Derrotado: devolve false e deixa pendingReason
      * - Bounce-back ao ultrapassar a meta
-     * - RestriÃ§Ãµes por linguagem:
+     * - Restricoes por linguagem:
      * Assembly: max 2
-     * C: max 3  (C# NÃƒO conta como C)
+     * C: max 3  (C# Nao conta como C)
      */
     public boolean moveCurrentPlayer(int nrPositions) {
         if (gameOver) {
@@ -484,6 +513,7 @@ public class GameManager {
             return false;
         }
 
+
         // Se estÃ¡ derrotado mas ainda aparece (seguranÃ§a)
         if (current.isDefeated()) {
             setLastMoveNoChange(currentId, current.getPosition(), nrPositions);
@@ -492,7 +522,7 @@ public class GameManager {
             return false;
         }
 
-        // Se estÃ¡ preso: nÃ£o pode mover, mas react deve retornar mensagem
+        // Se esta preso: nao pode mover, mas react deve retornar mensagem
         if (current.isTrapped()) {
             setLastMoveNoChange(currentId, current.getPosition(), nrPositions);
             this.pendingReaction = true;
@@ -500,8 +530,8 @@ public class GameManager {
             return false;
         }
 
-        // RestriÃ§Ãµes por linguagem
-        // Assembly: mÃ¡ximo 2 casas, C (apenas "C" exato): mÃ¡ximo 3 casas
+        // Restricoes por linguagem
+        // Assembly: maximo 2 casas, C (apenas "C" exato): maximo 3 casas
         String firstLang = current.getFirstLanguage();
         if (firstLang != null) {
             if (firstLang.equalsIgnoreCase("Assembly") && nrPositions > 2) {
@@ -511,7 +541,7 @@ public class GameManager {
                 return false;
             }
 
-            // C (apenas "C" exato, nÃ£o "C++" nem "C#")
+            // C (apenas "C" exato, nÃo "C++" nem "C#")
             if (firstLang.equalsIgnoreCase("C") && nrPositions > 3) {
                 setLastMoveNoChange(currentId, current.getPosition(), nrPositions);
                 this.pendingReaction = true;
@@ -551,7 +581,7 @@ public class GameManager {
         this.lastToolCollected = null;
     }
 
-    // Bounce-back: se passar da meta, o jogador "bate" e volta para trÃ¡s
+    // Bounce-back: se passar da meta, o jogador "bate" e volta para tras
     private int calculateNewPosition(int from, int nrPositions) {
         int to = from + nrPositions;
 
@@ -660,7 +690,7 @@ public class GameManager {
             // Ferramenta permanece no tabuleiro - pode ser apanhada por outros
             return "Recolheu ferramenta: " + boardTool.getName();
         } else {
-            return "JÃ¡ possui a ferramenta: " + boardTool.getName();
+            return "Já possui a ferramenta: " + boardTool.getName();
         }
     }
 
@@ -692,6 +722,18 @@ public class GameManager {
     private String handleRegularAbyss(Programmer current, Abyss abyss) {
         Tool canceller = current.findToolToCancelAbyss(abyss.getId());
 
+        if(canceller!=null){
+            if(canceller.getId() == 100){
+                String firstLang = current.getFirstLanguage();
+                if(firstLang == null || !firstLang.equalsIgnoreCase("C")){
+                    canceller = null;
+
+                }
+
+            }
+
+        }
+
         if (canceller != null) {
             current.removeTool(canceller);
             this.lastToolUsed = canceller;
@@ -708,6 +750,8 @@ public class GameManager {
                 }
             }
         }
+        // Antes de aplicar efeito
+        //current.incrementAbyssFallCount();
 
         abyss.applyEffect(current, lastDiceValue, lastFromPosition);
 
@@ -719,7 +763,8 @@ public class GameManager {
     }
 
     private void checkForVictory(Programmer current) {
-        if (current.getPosition() == boardSize && current.isPlaying()) {
+        int metade = (boardSize/2) + 1;
+        if (current.getPosition() == metade && current.isPlaying()) {
             gameOver = true;
             winnerId = current.getId();
         }
@@ -827,7 +872,7 @@ public class GameManager {
         Tool tool = toolsByPosition.get(pos);
         if (tool != null) {
             if (!programmer.hasToolOfType(tool.getId())) {
-                // Criar nova instÃ¢ncia da ferramenta
+                // Criar nova instanncia da ferramenta
                 Tool newTool = createTool(tool.getId(), pos);
                 if (newTool != null) {
                     programmer.addTool(newTool);
@@ -864,7 +909,8 @@ public class GameManager {
         }
 
         for (Programmer programmer : programmers) {
-            if (programmer.getPosition() == boardSize && programmer.isPlaying()) {
+            int metade = (boardSize /2) +1 ;
+            if (programmer.getPosition() == metade && programmer.isPlaying()) {
                 gameOver = true;
                 winnerId = programmer.getId();
                 return true;
@@ -1041,6 +1087,9 @@ public class GameManager {
             }
             case 5: {
                 return new AjudaProfessorTool(position);
+            }
+            case 100: {
+                return new MarteloDouradoTool(position);
             }
             default: {
                 return null;

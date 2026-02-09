@@ -17,6 +17,7 @@ public class SyntaxErrorAbyss extends Abyss {
             return;
         }
 
+
         int currentPos = programmer.getPosition();
         int newPos = currentPos - 1;
 

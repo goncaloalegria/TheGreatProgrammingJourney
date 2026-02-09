@@ -27,6 +27,7 @@ public class InfiniteLoopAbyss extends Abyss {
             return;
         }
 
+
         // O jogador fica preso no Ciclo Infinito
         programmer.setState("Preso");
     }

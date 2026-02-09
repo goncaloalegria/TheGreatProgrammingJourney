@@ -28,7 +28,7 @@ public class StackOverflowAbyss extends Abyss {
 
     public static final int ID = 10;
     private static final String NAME = "Stack Overflow";
-    private static final String IMAGE_NAME = "unknownPiece.png";
+    private static final String IMAGE_NAME = "";
     private static final int MINIMUM_RETREAT = 1;
 
     public StackOverflowAbyss(int position) {
