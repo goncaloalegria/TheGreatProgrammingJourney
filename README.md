@@ -277,7 +277,7 @@ java -cp .:junit-platform-console-standalone.jar \
 
 ## 👤 Autor
 
-- **Gonçalo Alegria** — a22408663 — [@goncaloalegria](https://github.com/goncaloalegria)
+- **Gonçalo Alegria** — [@goncaloalegria](https://github.com/goncaloalegria)
 
 ---
 
