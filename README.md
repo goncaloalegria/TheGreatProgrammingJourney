@@ -3,7 +3,6 @@
 [![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://www.java.com/)
 [![OOP](https://img.shields.io/badge/OOP-Design_Patterns-blue?style=for-the-badge&logo=abstract&logoColor=white)](#-arquitetura)
 [![JUnit](https://img.shields.io/badge/JUnit_5-25A162?style=for-the-badge&logo=junit5&logoColor=white)](https://junit.org/junit5/)
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
 **Jogo de tabuleiro em Java onde programadores enfrentam abismos de código e recolhem ferramentas para chegar à glória**
 
@@ -323,15 +322,9 @@ O projeto inclui uma suite completa de testes unitários com **JUnit 5**, cobrin
 
 ---
 
-## 📄 Licença
-
-Este projeto está licenciado sob a **MIT License** — veja o ficheiro [LICENSE](LICENSE) para detalhes.
-
----
-
 ## 👤 Autor
 
-- **Gonçalo Alegria** — a22408663 — [@goncaloalegria](https://github.com/goncaloalegria)
+- **Gonçalo Alegria** — [@goncaloalegria](https://github.com/goncaloalegria)
 
 ---
 
