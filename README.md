@@ -140,7 +140,7 @@ As ferramentas são recolhidas ao passar na casa correspondente e anulam abismos
 | 1ª Linguagem | Restrição |
 |---|---|
 | **Assembly** | Máximo 2 casas por turno |
-| **C** | Máximo 3 casas por turno |
+| **C** (exato, não C++ nem C#) | Máximo 3 casas por turno |
 | Outras | Sem restrição |
 
 ### Estados do Jogador
@@ -155,61 +155,114 @@ As ferramentas são recolhidas ao passar na casa correspondente e anulam abismos
 
 ## 💻 Instalação
 
+### Pré-requisitos
+
+| Requisito | Descrição |
+|---|---|
+| **Java JDK 11+** | Runtime e compilação |
+| **IntelliJ IDEA** | IDE recomendado (Community ou Ultimate) |
+| **JUnit 5** | Para correr os testes unitários |
+
 ### 1. Clonar o Repositório
 
 ```bash
-git clone https://github.com/goncaloalegria/great-programming-journey.git
-cd great-programming-journey
+git clone https://github.com/goncaloalegria/TheGreatProgrammingJourney.git
+cd TheGreatProgrammingJourney
 ```
 
-### 2. Estrutura do Projeto
+### 2. Abrir no IntelliJ
+
+1. Abrir o **IntelliJ IDEA**
+2. **File → Open** → selecionar a pasta do projeto
+3. Esperar que o IntelliJ indexe o projeto
+
+### 3. Configurar o SDK
+
+1. Ir a **File → Project Structure → Project**
+2. Em **SDK**, selecionar **Java 11** ou superior
+3. Em **Language level**, selecionar **11** ou superior
+4. Clicar **Apply → OK**
+
+### 4. Adicionar o GUI Viewer como Biblioteca
+
+O projeto inclui um JAR com a interface gráfica na pasta `lib/`:
 
 ```
-great-programming-journey/
+lib/
+└── LP2-GuiViewer2526-recurso-1.0.0.jar
+```
+
+Para o adicionar ao projeto:
+
+1. No painel do projeto, clicar direito na pasta **`lib`**
+2. Selecionar **Add as Library...**
+3. Confirmar com **OK**
+4. Verificar que o JAR aparece em **External Libraries** no painel lateral
+
+### 5. Configurar a Run Configuration
+
+O projeto utiliza um launcher Kotlin incluído no JAR do GUI Viewer:
+
+1. Ir a **Run → Edit Configurations...**
+2. Clicar no **+** → **Application**
+3. Preencher os campos:
+
+| Campo | Valor |
+|---|---|
+| **Name** | `TheGreatProgrammingJourney` |
+| **Main class** | `pt.ulusofona.lp2.greatprogrammingjourney.guiSimulator.AppLauncherKt` |
+| **Module classpath** | Selecionar o módulo do projeto |
+
+4. Clicar **OK**
+
+### 6. Executar
+
+Clicar no ▶️ **Run** ou pressionar `Shift + F10`. A interface gráfica do jogo deverá abrir.
+
+---
+
+## 📁 Estrutura do Projeto
+
+```
+TheGreatProgrammingJourney/
 ├── README.md
+├── DiagramaUML.png
+│
+├── lib/
+│   └── LP2-GuiViewer2526-recurso-1.0.0.jar   # Interface gráfica (GUI)
+│
 ├── src/
 │   └── pt/ulusofona/lp2/greatprogrammingjourney/
-│       ├── Main.java
-│       ├── GameManager.java
-│       ├── Programmer.java
-│       ├── Abyss.java                    # Classe abstrata
-│       │   ├── SyntaxErrorAbyss.java
-│       │   ├── LogicErrorAbyss.java
-│       │   ├── ExceptionAbyss.java
-│       │   ├── FileNotFoundExceptionAbyss.java
-│       │   ├── CrashAbyss.java
-│       │   ├── DuplicatedCodeAbyss.java
-│       │   ├── SecondaryEffects.java
-│       │   ├── BlueScreenOfDeathAbyss.java
-│       │   ├── InfiniteLoopAbyss.java
-│       │   ├── SegmentationFaultAbyss.java
-│       │   ├── StackOverflowAbyss.java
-│       │   └── LLMAbyss.java
-│       ├── Tool.java                     # Classe abstrata
-│       │   ├── InheritanceTool.java
-│       │   ├── FunctionalProgrammingTool.java
-│       │   ├── UnitTestTool.java
-│       │   ├── ExceptionTool.java
-│       │   ├── IdeTool.java
-│       │   └── AjudaProfessorTool.java
-│       ├── InvalidFileException.java
-│       └── TestGameManager.java          # JUnit 5
-└── images/
-    ├── syntax.png
-    ├── logic.png
-    ├── crash.png
-    ├── glory.png
-    └── ...
-```
-
-### 3. Compilar e Executar
-
-```bash
-# Compilar
-javac -d out src/pt/ulusofona/lp2/greatprogrammingjourney/*.java
-
-# Executar
-java -cp out pt.ulusofona.lp2.greatprogrammingjourney.Main
+│       ├── Main.java                          # Entry point (vazio — usar AppLauncherKt)
+│       ├── GameManager.java                   # Motor de jogo principal
+│       ├── Programmer.java                    # Modelo do jogador
+│       │
+│       ├── Abyss.java                         # Classe abstrata dos abismos
+│       │   ├── SyntaxErrorAbyss.java          # ID 0 — Recua 1
+│       │   ├── LogicErrorAbyss.java           # ID 1 — Recua dado/2
+│       │   ├── ExceptionAbyss.java            # ID 2 — Recua 2
+│       │   ├── FileNotFoundExceptionAbyss.java# ID 3 — Recua 3
+│       │   ├── CrashAbyss.java                # ID 4 — Volta a posição 1
+│       │   ├── DuplicatedCodeAbyss.java       # ID 5 — Volta à posição anterior
+│       │   ├── SecondaryEffects.java           # ID 6 — Volta 2 movimentos atrás
+│       │   ├── BlueScreenOfDeathAbyss.java    # ID 7 — Elimina jogador
+│       │   ├── InfiniteLoopAbyss.java         # ID 8 — Prende jogador
+│       │   ├── SegmentationFaultAbyss.java    # ID 9 — Todos recuam 3
+│       │   ├── StackOverflowAbyss.java        # ID 10 — Perde ferramentas
+│       │   └── LLMAbyss.java                  # ID 20 — Efeito especial
+│       │
+│       ├── Tool.java                          # Classe abstrata das ferramentas
+│       │   ├── InheritanceTool.java           # ID 0 — Herança
+│       │   ├── FunctionalProgrammingTool.java # ID 1 — Programação Funcional
+│       │   ├── UnitTestTool.java              # ID 2 — Testes Unitários
+│       │   ├── ExceptionTool.java             # ID 3 — Tratamento de Exceções
+│       │   ├── IdeTool.java                   # ID 4 — IDE
+│       │   └── AjudaProfessorTool.java        # ID 5 — Ajuda do Professor
+│       │
+│       ├── InvalidFileException.java          # Exceção para ficheiros inválidos
+│       └── TestGameManager.java               # Testes unitários (JUnit 5)
+│
+└── out/                                       # Ficheiros compilados
 ```
 
 ---
@@ -228,20 +281,13 @@ O projeto inclui uma suite completa de testes unitários com **JUnit 5**, cobrin
 | **Save / Load** | Gravação e carregamento de ficheiros |
 | **Edge cases** | Jogador preso, múltiplas ferramentas, posições mínimas |
 
-### Executar Testes
+### Executar Testes no IntelliJ
 
-```bash
-# Com Maven
-mvn test
+1. Abrir o ficheiro `TestGameManager.java`
+2. Clicar direito → **Run 'TestGameManager'**
+3. Os resultados aparecem no painel de testes em baixo
 
-# Com Gradle
-gradle test
-
-# Manualmente com JUnit
-java -cp .:junit-platform-console-standalone.jar \
-  org.junit.platform.console.ConsoleLauncher \
-  --select-class pt.ulusofona.lp2.greatprogrammingjourney.TestGameManager
-```
+> **Nota**: é necessário ter o JUnit 5 configurado. Se o IntelliJ pedir para adicionar a dependência, aceitar automaticamente.
 
 ---
 
@@ -267,17 +313,25 @@ java -cp .:junit-platform-console-standalone.jar \
 
 | Problema | Solução |
 |---|---|
+| Jogo não abre / `Main.java` não faz nada | O entry point é `AppLauncherKt` do JAR, não o `Main.java`. Configurar a Run Configuration conforme [passo 5 da instalação](#5-configurar-a-run-configuration) |
+| `Class not found: AppLauncherKt` | O JAR em `lib/` não foi adicionado como biblioteca. Clicar direito em `lib/` → **Add as Library** |
+| `No SDK specified` | Ir a **File → Project Structure → Project** e selecionar Java 11+ |
 | `createInitialBoard` retorna `false` | Verificar: 2–4 jogadores, cores válidas e únicas, IDs > 0 e únicos, board ≥ 2×jogadores |
 | Jogador não se move | Verificar se está `Preso` ou `Derrotado`, ou se excede limite da linguagem |
 | Ferramenta não anula abismo | Confirmar que a ferramenta certa está no inventário (ver tabela de anulações) |
-| `loadGame` lança exceção | Verificar formato do ficheiro de save |
-| Bounce-back inesperado | Posição = `boardSize - (posição_calculada - boardSize)` |
+| Testes falham com `No JUnit 5` | IntelliJ deve sugerir adicionar a dependência automaticamente; aceitar o prompt |
+
+---
+
+## 📄 Licença
+
+Este projeto está licenciado sob a **MIT License** — veja o ficheiro [LICENSE](LICENSE) para detalhes.
 
 ---
 
 ## 👤 Autor
 
-- **Gonçalo Alegria** — [@goncaloalegria](https://github.com/goncaloalegria)
+- **Gonçalo Alegria** — a22408663 — [@goncaloalegria](https://github.com/goncaloalegria)
 
 ---
 
