@@ -140,7 +140,7 @@ As ferramentas são recolhidas ao passar na casa correspondente e anulam abismos
 | 1ª Linguagem | Restrição |
 |---|---|
 | **Assembly** | Máximo 2 casas por turno |
-| **C** (exato, não C++ nem C#) | Máximo 3 casas por turno |
+| **C** | Máximo 3 casas por turno |
 | Outras | Sem restrição |
 
 ### Estados do Jogador
